@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 커스텀 스타일 */
+@layer components {
+    .btn {
+        @apply px-4 py-2 rounded-md font-medium transition-colors;
+    }
+
+    .btn-primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700;
+    }
+
+    .btn-secondary {
+        @apply bg-gray-600 text-white hover:bg-gray-700;
+    }
+
+    .btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700;
+    }
+
+    .btn-success {
+        @apply bg-green-600 text-white hover:bg-green-700;
+    }
+
+    .form-input {
+        @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+    }
+
+    .form-select {
+        @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+    }
+
+    .form-textarea {
+        @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+    }
+
+    .card {
+        @apply bg-white shadow rounded-lg;
+    }
+
+    .table-cell {
+        @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+    }
+
+    .badge {
+        @apply px-2 py-1 text-xs font-medium rounded-full;
+    }
+
+    .badge-success {
+        @apply bg-green-100 text-green-800;
+    }
+
+    .badge-danger {
+        @apply bg-red-100 text-red-800;
+    }
+
+    .badge-warning {
+        @apply bg-yellow-100 text-yellow-800;
+    }
+
+    .badge-info {
+        @apply bg-blue-100 text-blue-800;
+    }
+}
+
+/* 로딩 애니메이션 */
+.loading-spinner {
+    @apply animate-spin rounded-full border-b-2 border-blue-600;
+}
+
+/* 토스트 스타일 커스터마이징 */
+.Vue-Toastification__toast {
+    @apply rounded-lg shadow-lg;
+}
+
+.Vue-Toastification__toast--success {
+    @apply bg-green-500;
+}
+
+.Vue-Toastification__toast--error {
+    @apply bg-red-500;
+}
+
+.Vue-Toastification__toast--warning {
+    @apply bg-yellow-500;
+}
+
+.Vue-Toastification__toast--info {
+    @apply bg-blue-500;
+}
