@@ -13,15 +13,28 @@ export const useAuthStore = defineStore('auth', {
             this.loading = true
             try {
                 const config = useRuntimeConfig()
+
+                // 필드명 매핑
+                const loginData = {
+                    usernameOrEmail: credentials.email || credentials.usernameOrEmail,
+                    password: credentials.password
+                }
+
+                console.log('Sending login request:', loginData)
+
                 const response = await $fetch(`${config.public.apiBase}/auth/login`, {
                     method: 'POST',
-                    body: credentials
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: loginData
                 })
 
-                this.setAuth(response.token, response.user)
+                this.setAuth(response.data.token, response.data.user)
                 await navigateTo('/dashboard')
                 return response
             } catch (error) {
+                console.error('Login error:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -34,6 +47,9 @@ export const useAuthStore = defineStore('auth', {
                 const config = useRuntimeConfig()
                 const response = await $fetch(`${config.public.apiBase}/auth/oauth2/${provider}`, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: { code }
                 })
 

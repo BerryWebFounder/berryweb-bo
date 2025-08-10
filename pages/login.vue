@@ -86,7 +86,7 @@ const authStore = useAuthStore()
 const config = useRuntimeConfig()
 
 const form = reactive({
-  email: '',
+  usernameOrEmail: '',
   password: ''
 })
 
