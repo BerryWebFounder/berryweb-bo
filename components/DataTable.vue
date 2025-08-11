@@ -10,6 +10,7 @@
                 type="text"
                 placeholder="검색..."
                 class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                @input="handleSearch"
             />
           </div>
         </div>
@@ -18,6 +19,7 @@
           <select
               v-if="filters.length > 0"
               v-model="selectedFilter"
+              @change="handleFilterChange"
               class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="">전체</option>
@@ -28,6 +30,17 @@
             >
               {{ filter.label }}
             </option>
+          </select>
+
+          <select
+              v-model="pageSize"
+              @change="handlePageSizeChange"
+              class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="10">10개씩 보기</option>
+            <option value="25">25개씩 보기</option>
+            <option value="50">50개씩 보기</option>
+            <option value="100">100개씩 보기</option>
           </select>
 
           <slot name="actions" />
@@ -44,14 +57,14 @@
               v-for="column in columns"
               :key="column.key"
               class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-              @click="handleSort(column.key)"
+              @click="handleSort(column.key, column.sortable !== false)"
           >
             <div class="flex items-center space-x-1">
               <span>{{ column.label }}</span>
               <svg
-                  v-if="sortKey === column.key"
+                  v-if="sortColumn === column.key && column.sortable !== false"
                   class="w-4 h-4"
-                  :class="sortOrder === 'desc' ? 'transform rotate-180' : ''"
+                  :class="sortDirection === 'desc' ? 'transform rotate-180' : ''"
                   fill="currentColor"
                   viewBox="0 0 20 20"
               >
@@ -68,11 +81,25 @@
         <tbody class="bg-white divide-y divide-gray-200">
         <tr v-if="loading" class="animate-pulse">
           <td :colspan="columns.length + 1" class="px-6 py-4 text-center text-gray-500">
-            로딩 중...
+            <div class="flex items-center justify-center">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <span class="ml-2">로딩 중...</span>
+            </div>
           </td>
         </tr>
 
-        <tr v-else-if="filteredData.length === 0">
+        <tr v-else-if="error">
+          <td :colspan="columns.length + 1" class="px-6 py-4 text-center text-red-500">
+            <div class="flex items-center justify-center">
+              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              {{ error }}
+            </div>
+          </td>
+        </tr>
+
+        <tr v-else-if="!data || data.length === 0">
           <td :colspan="columns.length + 1" class="px-6 py-4 text-center text-gray-500">
             데이터가 없습니다.
           </td>
@@ -80,9 +107,9 @@
 
         <tr
             v-else
-            v-for="(item, index) in paginatedData"
+            v-for="(item, index) in data"
             :key="item.id || index"
-            class="hover:bg-gray-50"
+            class="hover:bg-gray-50 transition-colors"
         >
           <td
               v-for="column in columns"
@@ -93,13 +120,14 @@
                 :name="`cell-${column.key}`"
                 :item="item"
                 :value="getNestedValue(item, column.key)"
+                :index="index"
             >
               {{ formatValue(getNestedValue(item, column.key), column.type) }}
             </slot>
           </td>
 
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <slot name="actions" :item="item" />
+            <slot name="actions" :item="item" :index="index" />
           </td>
         </tr>
         </tbody>
@@ -107,30 +135,44 @@
     </div>
 
     <!-- 페이지네이션 -->
-    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6" v-if="pagination">
       <div class="flex items-center justify-between">
         <div class="text-sm text-gray-700">
-          총 {{ filteredData.length }}개 중
-          {{ ((currentPage - 1) * itemsPerPage) + 1 }} -
-          {{ Math.min(currentPage * itemsPerPage, filteredData.length) }}개 표시
+          총 {{ pagination.totalElements?.toLocaleString() || 0 }}개 중
+          {{ Math.min((pagination.number * pagination.size) + 1, pagination.totalElements || 0) }} -
+          {{ Math.min((pagination.number + 1) * pagination.size, pagination.totalElements || 0) }}개 표시
         </div>
 
         <div class="flex items-center space-x-2">
           <button
-              @click="currentPage = currentPage - 1"
-              :disabled="currentPage === 1"
+              @click="goToPage(pagination.number - 1)"
+              :disabled="pagination.first || loading"
               class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             이전
           </button>
 
-          <span class="text-sm text-gray-700">
-            {{ currentPage }} / {{ totalPages }}
-          </span>
+          <!-- 페이지 번호들 -->
+          <div class="flex items-center space-x-1">
+            <button
+                v-for="page in visiblePages"
+                :key="page"
+                @click="goToPage(page - 1)"
+                :disabled="loading"
+                :class="[
+                  'px-3 py-1 text-sm font-medium rounded-md',
+                  page - 1 === pagination.number
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-50 border border-gray-300'
+                ]"
+            >
+              {{ page }}
+            </button>
+          </div>
 
           <button
-              @click="currentPage = currentPage + 1"
-              :disabled="currentPage === totalPages"
+              @click="goToPage(pagination.number + 1)"
+              :disabled="pagination.last || loading"
               class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             다음
@@ -159,70 +201,85 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  itemsPerPage: {
-    type: Number,
-    default: 10
+  error: {
+    type: String,
+    default: null
+  },
+  pagination: {
+    type: Object,
+    default: null
   }
 })
+
+const emit = defineEmits(['search', 'filter', 'sort', 'page-change', 'page-size-change'])
 
 const searchQuery = ref('')
 const selectedFilter = ref('')
-const sortKey = ref('')
-const sortOrder = ref('asc')
-const currentPage = ref(1)
+const sortColumn = ref('')
+const sortDirection = ref('asc')
+const pageSize = ref(10)
 
-const filteredData = computed(() => {
-  let result = [...props.data]
+let searchTimeout = null
 
-  // 검색 필터
-  if (searchQuery.value) {
-    result = result.filter(item => {
-      return props.columns.some(column => {
-        const value = getNestedValue(item, column.key)
-        return String(value).toLowerCase().includes(searchQuery.value.toLowerCase())
-      })
-    })
+const visiblePages = computed(() => {
+  if (!props.pagination) return []
+
+  const totalPages = props.pagination.totalPages
+  const currentPage = props.pagination.number + 1 // 0-based to 1-based
+  const delta = 2
+
+  let start = Math.max(1, currentPage - delta)
+  let end = Math.min(totalPages, currentPage + delta)
+
+  // 페이지 수가 적으면 모두 표시
+  if (totalPages <= 5) {
+    start = 1
+    end = totalPages
   }
 
-  // 추가 필터
-  if (selectedFilter.value) {
-    result = result.filter(item => {
-      return getNestedValue(item, 'status') === selectedFilter.value
-    })
+  const pages = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
   }
 
-  // 정렬
-  if (sortKey.value) {
-    result.sort((a, b) => {
-      const aVal = getNestedValue(a, sortKey.value)
-      const bVal = getNestedValue(b, sortKey.value)
-
-      if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1
-      return 0
-    })
-  }
-
-  return result
+  return pages
 })
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredData.value.length / props.itemsPerPage)
-})
+const handleSearch = () => {
+  // 디바운싱 적용
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    emit('search', searchQuery.value)
+  }, 300)
+}
 
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * props.itemsPerPage
-  const end = start + props.itemsPerPage
-  return filteredData.value.slice(start, end)
-})
+const handleFilterChange = () => {
+  emit('filter', selectedFilter.value)
+}
 
-const handleSort = (key) => {
-  if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+const handleSort = (column, sortable = true) => {
+  if (!sortable) return
+
+  if (sortColumn.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
-    sortKey.value = key
-    sortOrder.value = 'asc'
+    sortColumn.value = column
+    sortDirection.value = 'asc'
   }
+
+  emit('sort', {
+    column: sortColumn.value,
+    direction: sortDirection.value
+  })
+}
+
+const handlePageSizeChange = () => {
+  emit('page-size-change', parseInt(pageSize.value))
+}
+
+const goToPage = (page) => {
+  if (page < 0 || page >= (props.pagination?.totalPages || 0)) return
+  emit('page-change', page)
 }
 
 const getNestedValue = (obj, path) => {
@@ -235,6 +292,8 @@ const formatValue = (value, type) => {
   switch (type) {
     case 'date':
       return new Date(value).toLocaleDateString('ko-KR')
+    case 'datetime':
+      return new Date(value).toLocaleString('ko-KR')
     case 'currency':
       return new Intl.NumberFormat('ko-KR', {
         style: 'currency',
@@ -242,13 +301,17 @@ const formatValue = (value, type) => {
       }).format(value)
     case 'number':
       return new Intl.NumberFormat('ko-KR').format(value)
+    case 'boolean':
+      return value ? '예' : '아니요'
     default:
       return value
   }
 }
 
-// 검색어나 필터가 변경될 때 첫 페이지로 이동
-watch([searchQuery, selectedFilter], () => {
-  currentPage.value = 1
+// 컴포넌트 마운트 시 초기값 설정
+onMounted(() => {
+  if (props.pagination) {
+    pageSize.value = props.pagination.size || 10
+  }
 })
 </script>
