@@ -3,7 +3,6 @@ import { defineStore } from 'pinia'
 export const useProductStore = defineStore('product', {
     state: () => ({
         products: [],
-        categories: [],
         reviews: [],
         currentProduct: null,
         loading: false,
@@ -12,7 +11,17 @@ export const useProductStore = defineStore('product', {
             page: 0,
             size: 10,
             totalElements: 0,
-            totalPages: 0
+            totalPages: 0,
+            first: true,
+            last: true
+        },
+        reviewsPagination: {
+            page: 0,
+            size: 10,
+            totalElements: 0,
+            totalPages: 0,
+            first: true,
+            last: true
         }
     }),
 
@@ -21,61 +30,86 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const queryParams = new URLSearchParams({
+                const queryParams = {
                     page: params.page || 0,
                     size: params.size || 10,
-                    search: params.search || '',
                     ...params
-                })
+                }
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/shops/${shopId}/products?${queryParams}`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                // search 파라미터가 있으면 추가
+                if (params.search && params.search.trim()) {
+                    queryParams.search = params.search.trim()
+                }
 
-                // Spring Data JPA Page 응답 구조
-                if (response.data?.content) {
-                    this.products = response.data.content
-                    this.pagination = {
-                        page: response.data.number,
-                        size: response.data.size,
-                        totalElements: response.data.totalElements,
-                        totalPages: response.data.totalPages
+                // 상태 필터가 있으면 추가
+                if (params.status) {
+                    queryParams.status = params.status
+                }
+
+                // 정렬 파라미터가 있으면 추가
+                if (params.sort) {
+                    queryParams.sort = params.sort
+                }
+
+                const response = await $api.get(`/api/v1/shops/${shopId}/products`, { params: queryParams })
+
+                if (response.success) {
+                    if (response.data.content) {
+                        // 페이지네이션이 있는 경우
+                        this.products = response.data.content
+                        this.pagination = {
+                            page: response.data.number,
+                            size: response.data.size,
+                            totalElements: response.data.totalElements,
+                            totalPages: response.data.totalPages,
+                            first: response.data.first,
+                            last: response.data.last
+                        }
+                    } else {
+                        // 일반 배열인 경우
+                        this.products = response.data
+                        this.pagination = {
+                            page: 0,
+                            size: response.data.length,
+                            totalElements: response.data.length,
+                            totalPages: 1,
+                            first: true,
+                            last: true
+                        }
                     }
                 } else {
-                    this.products = response.data || response
+                    throw new Error(response.message || '상품 목록 조회에 실패했습니다.')
                 }
 
                 return response
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('상품 목록 조회 실패:', error)
                 throw error
             } finally {
                 this.loading = false
             }
         },
 
-        async getProductById(productId) {
+        async fetchProductById(productId) {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/products/${productId}`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                const response = await $api.get(`/api/v1/products/${productId}`)
 
-                this.currentProduct = response.data || response
-                return this.currentProduct
+                if (response.success) {
+                    this.currentProduct = response.data
+                    return response.data
+                } else {
+                    throw new Error(response.message || '상품 정보 조회에 실패했습니다.')
+                }
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('상품 정보 조회 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -86,8 +120,7 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
                 // 이미지가 있는 경우 FormData 사용
                 if (images && images.length > 0) {
@@ -99,38 +132,36 @@ export const useProductStore = defineStore('product', {
                     }))
 
                     // 이미지 파일들 추가
-                    images.forEach((image, index) => {
+                    images.forEach((image) => {
                         formData.append('images', image)
                     })
 
-                    const response = await $fetch(`${config.public.apiBase}/api/v1/shops/${shopId}/products`, {
-                        method: 'POST',
+                    const response = await $api.post(`/api/v1/shops/${shopId}/products`, formData, {
                         headers: {
-                            Authorization: `Bearer ${authStore.token}`
-                        },
-                        body: formData
+                            'Content-Type': 'multipart/form-data'
+                        }
                     })
 
-                    const newProduct = response.data || response
-                    this.products.unshift(newProduct)
-                    return newProduct
+                    if (response.success) {
+                        this.products.unshift(response.data)
+                        return response.data
+                    } else {
+                        throw new Error(response.message || '상품 생성에 실패했습니다.')
+                    }
                 } else {
                     // 이미지가 없는 경우 JSON으로 전송
-                    const response = await $fetch(`${config.public.apiBase}/api/v1/shops/${shopId}/products`, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${authStore.token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: productData
-                    })
+                    const response = await $api.post(`/api/v1/shops/${shopId}/products`, productData)
 
-                    const newProduct = response.data || response
-                    this.products.unshift(newProduct)
-                    return newProduct
+                    if (response.success) {
+                        this.products.unshift(response.data)
+                        return response.data
+                    } else {
+                        throw new Error(response.message || '상품 생성에 실패했습니다.')
+                    }
                 }
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('상품 생성 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -141,29 +172,29 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/shops/${shopId}/products/${productId}`, {
-                    method: 'PUT',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: productData
-                })
+                const response = await $api.put(`/api/v1/shops/${shopId}/products/${productId}`, productData)
 
-                const updatedProduct = response.data || response
-                const index = this.products.findIndex(p => p.id === productId)
-                if (index !== -1) {
-                    this.products[index] = updatedProduct
+                if (response.success) {
+                    // 목록에서 해당 상품 업데이트
+                    const index = this.products.findIndex(p => p.id === productId)
+                    if (index !== -1) {
+                        this.products[index] = response.data
+                    }
+
+                    // 현재 선택된 상품이면 업데이트
+                    if (this.currentProduct?.id === productId) {
+                        this.currentProduct = response.data
+                    }
+
+                    return response.data
+                } else {
+                    throw new Error(response.message || '상품 정보 수정에 실패했습니다.')
                 }
-                if (this.currentProduct?.id === productId) {
-                    this.currentProduct = updatedProduct
-                }
-                return updatedProduct
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('상품 정보 수정 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -174,76 +205,111 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                // 실제로는 상품을 DISCONTINUED 상태로 변경
+                const product = this.products.find(p => p.id === productId)
+                if (!product) {
+                    throw new Error('상품을 찾을 수 없습니다.')
+                }
 
-                await $fetch(`${config.public.apiBase}/api/v1/shops/${shopId}/products/${productId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
+                const response = await this.updateProduct(shopId, productId, {
+                    ...product,
+                    status: 'DISCONTINUED'
                 })
 
+                // 목록에서 제거
                 this.products = this.products.filter(p => p.id !== productId)
+
+                // 현재 선택된 상품이면 클리어
                 if (this.currentProduct?.id === productId) {
                     this.currentProduct = null
                 }
+
+                return response
             } catch (error) {
-                this.error = error.data?.message || error.message
+                console.error('상품 삭제 실패:', error)
                 throw error
-            } finally {
-                this.loading = false
             }
         },
 
-        async searchProducts(keyword, page = 0, size = 10) {
+        async searchProducts(keyword, params = {}) {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const queryParams = new URLSearchParams({
+                const queryParams = {
                     keyword,
-                    page,
-                    size
-                })
+                    page: params.page || 0,
+                    size: params.size || 10,
+                    ...params
+                }
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/products/search?${queryParams}`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
+                const response = await $api.get('/api/v1/products/search', { params: queryParams })
+
+                if (response.success) {
+                    if (response.data.content) {
+                        this.products = response.data.content
+                        this.pagination = {
+                            page: response.data.number,
+                            size: response.data.size,
+                            totalElements: response.data.totalElements,
+                            totalPages: response.data.totalPages,
+                            first: response.data.first,
+                            last: response.data.last
+                        }
+                    } else {
+                        this.products = response.data
                     }
-                })
+                } else {
+                    throw new Error(response.message || '상품 검색에 실패했습니다.')
+                }
 
-                this.products = response.data?.content || response.content || response.data || response
                 return response
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('상품 검색 실패:', error)
                 throw error
             } finally {
                 this.loading = false
             }
         },
 
-        async getFeaturedProducts(page = 0, size = 10) {
+        async getFeaturedProducts(params = {}) {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const queryParams = new URLSearchParams({ page, size })
+                const queryParams = {
+                    page: params.page || 0,
+                    size: params.size || 10,
+                    ...params
+                }
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/products/featured?${queryParams}`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
+                const response = await $api.get('/api/v1/products/featured', { params: queryParams })
+
+                if (response.success) {
+                    if (response.data.content) {
+                        this.products = response.data.content
+                        this.pagination = {
+                            page: response.data.number,
+                            size: response.data.size,
+                            totalElements: response.data.totalElements,
+                            totalPages: response.data.totalPages,
+                            first: response.data.first,
+                            last: response.data.last
+                        }
+                    } else {
+                        this.products = response.data
                     }
-                })
+                } else {
+                    throw new Error(response.message || '추천 상품 조회에 실패했습니다.')
+                }
 
-                this.products = response.data?.content || response.content || response.data || response
                 return response
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('추천 상품 조회 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -251,25 +317,42 @@ export const useProductStore = defineStore('product', {
         },
 
         // 리뷰 관련 메서드들
-        async fetchReviews(productId, page = 0, size = 10) {
+        async fetchReviews(productId, params = {}) {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const queryParams = new URLSearchParams({ page, size })
+                const queryParams = {
+                    page: params.page || 0,
+                    size: params.size || 10,
+                    ...params
+                }
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/products/${productId}/reviews?${queryParams}`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
+                const response = await $api.get(`/api/v1/products/${productId}/reviews`, { params: queryParams })
+
+                if (response.success) {
+                    if (response.data.content) {
+                        this.reviews = response.data.content
+                        this.reviewsPagination = {
+                            page: response.data.number,
+                            size: response.data.size,
+                            totalElements: response.data.totalElements,
+                            totalPages: response.data.totalPages,
+                            first: response.data.first,
+                            last: response.data.last
+                        }
+                    } else {
+                        this.reviews = response.data
                     }
-                })
+                } else {
+                    throw new Error(response.message || '리뷰 목록 조회에 실패했습니다.')
+                }
 
-                this.reviews = response.data?.content || response.content || response.data || response
                 return response
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('리뷰 목록 조회 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -280,8 +363,7 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
                 let response
                 if (images && images.length > 0) {
@@ -293,29 +375,24 @@ export const useProductStore = defineStore('product', {
                         formData.append('images', image)
                     })
 
-                    response = await $fetch(`${config.public.apiBase}/api/v1/products/${productId}/reviews`, {
-                        method: 'POST',
+                    response = await $api.post(`/api/v1/products/${productId}/reviews`, formData, {
                         headers: {
-                            Authorization: `Bearer ${authStore.token}`
-                        },
-                        body: formData
+                            'Content-Type': 'multipart/form-data'
+                        }
                     })
                 } else {
-                    response = await $fetch(`${config.public.apiBase}/api/v1/products/${productId}/reviews`, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${authStore.token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: reviewData
-                    })
+                    response = await $api.post(`/api/v1/products/${productId}/reviews`, reviewData)
                 }
 
-                const newReview = response.data || response
-                this.reviews.unshift(newReview)
-                return newReview
+                if (response.success) {
+                    this.reviews.unshift(response.data)
+                    return response.data
+                } else {
+                    throw new Error(response.message || '리뷰 작성에 실패했습니다.')
+                }
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('리뷰 작성 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -326,26 +403,22 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/products/${productId}/reviews/${reviewId}`, {
-                    method: 'PUT',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: reviewData
-                })
+                const response = await $api.put(`/api/v1/products/${productId}/reviews/${reviewId}`, reviewData)
 
-                const updatedReview = response.data || response
-                const index = this.reviews.findIndex(r => r.id === reviewId)
-                if (index !== -1) {
-                    this.reviews[index] = updatedReview
+                if (response.success) {
+                    const index = this.reviews.findIndex(r => r.id === reviewId)
+                    if (index !== -1) {
+                        this.reviews[index] = response.data
+                    }
+                    return response.data
+                } else {
+                    throw new Error(response.message || '리뷰 수정에 실패했습니다.')
                 }
-                return updatedReview
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('리뷰 수정 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -356,19 +429,18 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                await $fetch(`${config.public.apiBase}/api/v1/products/${productId}/reviews/${reviewId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                const response = await $api.delete(`/api/v1/products/${productId}/reviews/${reviewId}`)
 
-                this.reviews = this.reviews.filter(r => r.id !== reviewId)
+                if (response.success) {
+                    this.reviews = this.reviews.filter(r => r.id !== reviewId)
+                } else {
+                    throw new Error(response.message || '리뷰 삭제에 실패했습니다.')
+                }
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('리뷰 삭제 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -379,28 +451,59 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { $api } = useNuxtApp()
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/products/${productId}/reviews/${reviewId}/helpful`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
+                const response = await $api.post(`/api/v1/products/${productId}/reviews/${reviewId}/helpful`)
+
+                if (response.success) {
+                    // 리뷰 목록 새로고침 또는 해당 리뷰만 업데이트
+                    const index = this.reviews.findIndex(r => r.id === reviewId)
+                    if (index !== -1 && response.data) {
+                        this.reviews[index] = response.data
                     }
-                })
-
-                // 리뷰 목록 새로고침 또는 해당 리뷰만 업데이트
-                const index = this.reviews.findIndex(r => r.id === reviewId)
-                if (index !== -1 && response.data) {
-                    this.reviews[index] = response.data
+                    return response.data
+                } else {
+                    throw new Error(response.message || '도움됨 처리에 실패했습니다.')
                 }
-
-                return response.data || response
             } catch (error) {
                 this.error = error.data?.message || error.message
+                console.error('도움됨 처리 실패:', error)
                 throw error
             } finally {
                 this.loading = false
+            }
+        },
+
+        // 상태 초기화
+        clearError() {
+            this.error = null
+        },
+
+        clearCurrentProduct() {
+            this.currentProduct = null
+        },
+
+        clearProducts() {
+            this.products = []
+            this.pagination = {
+                page: 0,
+                size: 10,
+                totalElements: 0,
+                totalPages: 0,
+                first: true,
+                last: true
+            }
+        },
+
+        clearReviews() {
+            this.reviews = []
+            this.reviewsPagination = {
+                page: 0,
+                size: 10,
+                totalElements: 0,
+                totalPages: 0,
+                first: true,
+                last: true
             }
         }
     }

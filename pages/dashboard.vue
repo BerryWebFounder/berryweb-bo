@@ -32,7 +32,7 @@
       </div>
 
       <!-- 통계 카드들 -->
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
           <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
           <div class="relative p-6">
@@ -47,7 +47,7 @@
               <div class="text-right">
                 <p class="text-sm font-medium text-gray-500 mb-1">총 상점 수</p>
                 <p class="text-3xl font-bold text-gray-900">{{ stats.totalShops.toLocaleString() }}</p>
-                <p class="text-xs text-green-600 font-medium">+12% 지난 달 대비</p>
+                <p class="text-xs text-green-600 font-medium">+{{ stats.newShopsThisMonth }}개 이번 달</p>
               </div>
             </div>
           </div>
@@ -67,27 +67,7 @@
               <div class="text-right">
                 <p class="text-sm font-medium text-gray-500 mb-1">총 상품 수</p>
                 <p class="text-3xl font-bold text-gray-900">{{ stats.totalProducts.toLocaleString() }}</p>
-                <p class="text-xs text-green-600 font-medium">+8% 지난 주 대비</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-          <div class="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-          <div class="relative p-6">
-            <div class="flex items-center justify-between">
-              <div class="flex-shrink-0">
-                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-sm font-medium text-gray-500 mb-1">총 게시판 수</p>
-                <p class="text-3xl font-bold text-gray-900">{{ stats.totalBoards.toLocaleString() }}</p>
-                <p class="text-xs text-blue-600 font-medium">+5% 지난 달 대비</p>
+                <p class="text-xs text-green-600 font-medium">+{{ stats.newProductsThisWeek }}개 이번 주</p>
               </div>
             </div>
           </div>
@@ -107,14 +87,14 @@
               <div class="text-right">
                 <p class="text-sm font-medium text-gray-500 mb-1">활성 사용자</p>
                 <p class="text-3xl font-bold text-gray-900">{{ stats.activeUsers.toLocaleString() }}</p>
-                <p class="text-xs text-green-600 font-medium">+24% 지난 주 대비</p>
+                <p class="text-xs text-green-600 font-medium">+{{ stats.newUsersThisWeek }}명 이번 주</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 차트 섹션 (CSS로 구현) -->
+      <!-- 차트 섹션 -->
       <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <!-- 상점 생성 추이 -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -148,25 +128,25 @@
           </div>
         </div>
 
-        <!-- 게시물 통계 -->
+        <!-- 상품 통계 -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4">
             <h3 class="text-lg font-semibold text-white flex items-center">
               <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              게시물 통계
+              상품 상태별 통계
             </h3>
-            <p class="text-emerald-100 text-sm mt-1">카테고리별 게시물 분포</p>
+            <p class="text-emerald-100 text-sm mt-1">상품 상태별 분포</p>
           </div>
           <div class="p-6">
             <div class="space-y-6">
-              <div v-for="(data, index) in postStatsData" :key="index" class="relative">
+              <div v-for="(data, index) in productStatsData" :key="index" class="relative">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center space-x-3">
                     <div
                         class="w-4 h-4 rounded-full"
-                        :style="{ backgroundColor: postColors[index] }"
+                        :style="{ backgroundColor: productColors[index] }"
                     ></div>
                     <span class="text-sm font-medium text-gray-700">{{ data.name }}</span>
                   </div>
@@ -177,151 +157,11 @@
                       class="h-3 rounded-full transition-all duration-1000 ease-out"
                       :style="{
                       width: `${data.value}%`,
-                      backgroundColor: postColors[index]
+                      backgroundColor: productColors[index]
                     }"
                   ></div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 성장 지표 -->
-      <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div class="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4">
-          <h3 class="text-lg font-semibold text-white flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            성장 지표
-          </h3>
-          <p class="text-gray-300 text-sm mt-1">주요 성과 지표 (KPI)</p>
-        </div>
-        <div class="p-6">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="text-center">
-              <div class="relative w-20 h-20 mx-auto mb-3">
-                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#e5e7eb"
-                      stroke-width="8"
-                      fill="none"
-                  />
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#3b82f6"
-                      stroke-width="8"
-                      fill="none"
-                      stroke-dasharray="251.2"
-                      stroke-dashoffset="62.8"
-                      stroke-linecap="round"
-                      class="transition-all duration-1000"
-                  />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="text-xl font-bold text-gray-900">75%</span>
-                </div>
-              </div>
-              <p class="text-sm font-medium text-gray-700">월간 목표 달성률</p>
-            </div>
-
-            <div class="text-center">
-              <div class="relative w-20 h-20 mx-auto mb-3">
-                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#e5e7eb"
-                      stroke-width="8"
-                      fill="none"
-                  />
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#10b981"
-                      stroke-width="8"
-                      fill="none"
-                      stroke-dasharray="251.2"
-                      stroke-dashoffset="50.24"
-                      stroke-linecap="round"
-                      class="transition-all duration-1000"
-                  />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="text-xl font-bold text-gray-900">80%</span>
-                </div>
-              </div>
-              <p class="text-sm font-medium text-gray-700">사용자 만족도</p>
-            </div>
-
-            <div class="text-center">
-              <div class="relative w-20 h-20 mx-auto mb-3">
-                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#e5e7eb"
-                      stroke-width="8"
-                      fill="none"
-                  />
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#8b5cf6"
-                      stroke-width="8"
-                      fill="none"
-                      stroke-dasharray="251.2"
-                      stroke-dashoffset="100.48"
-                      stroke-linecap="round"
-                      class="transition-all duration-1000"
-                  />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="text-xl font-bold text-gray-900">60%</span>
-                </div>
-              </div>
-              <p class="text-sm font-medium text-gray-700">시스템 효율성</p>
-            </div>
-
-            <div class="text-center">
-              <div class="relative w-20 h-20 mx-auto mb-3">
-                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#e5e7eb"
-                      stroke-width="8"
-                      fill="none"
-                  />
-                  <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#f59e0b"
-                      stroke-width="8"
-                      fill="none"
-                      stroke-dasharray="251.2"
-                      stroke-dashoffset="25.12"
-                      stroke-linecap="round"
-                      class="transition-all duration-1000"
-                  />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="text-xl font-bold text-gray-900">90%</span>
-                </div>
-              </div>
-              <p class="text-sm font-medium text-gray-700">서버 가동률</p>
             </div>
           </div>
         </div>
@@ -350,25 +190,25 @@
                 </svg>
               </div>
               <div class="ml-4">
-                <p class="font-medium text-gray-900">새 상점 추가</p>
+                <p class="font-medium text-gray-900">상점 관리</p>
                 <p class="text-sm text-gray-500">상점을 생성하고 관리</p>
               </div>
             </NuxtLink>
 
-            <NuxtLink
-                to="/boards"
-                class="flex items-center p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl hover:from-emerald-100 hover:to-teal-100 transition-colors group"
+            <button
+                @click="refreshData"
+                class="w-full flex items-center p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl hover:from-emerald-100 hover:to-teal-100 transition-colors group"
             >
               <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </div>
-              <div class="ml-4">
-                <p class="font-medium text-gray-900">게시판 관리</p>
-                <p class="text-sm text-gray-500">공지사항 및 FAQ 관리</p>
+              <div class="ml-4 text-left">
+                <p class="font-medium text-gray-900">데이터 새로고침</p>
+                <p class="text-sm text-gray-500">최신 통계 업데이트</p>
               </div>
-            </NuxtLink>
+            </button>
 
             <button class="w-full flex items-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group">
               <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -396,7 +236,12 @@
             <p class="text-gray-300 text-sm mt-1">실시간 시스템 활동 내역</p>
           </div>
           <div class="p-6">
-            <div class="flow-root max-h-80 overflow-y-auto">
+            <div v-if="loading" class="flex items-center justify-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+              <span class="ml-2 text-gray-600">활동 내역을 불러오는 중...</span>
+            </div>
+
+            <div v-else class="flow-root max-h-80 overflow-y-auto">
               <ul class="-mb-8">
                 <li v-for="(activity, index) in recentActivities" :key="activity.id">
                   <div class="relative pb-8" :class="{ 'pb-0': index === recentActivities.length - 1 }">
@@ -448,20 +293,22 @@
 
 <script setup>
 definePageMeta({
-  middleware: 'auth',
-  layout: 'admin'
+  middleware: 'auth'
 })
 
-const authStore = useAuthStore()
 const shopStore = useShopStore()
-const boardStore = useBoardStore()
+const toast = useToast()
 
 const currentTime = ref('')
+const loading = ref(false)
+
 const stats = ref({
-  totalShops: 127,
-  totalProducts: 2486,
-  totalBoards: 15,
-  activeUsers: 1342
+  totalShops: 0,
+  totalProducts: 0,
+  activeUsers: 0,
+  newShopsThisMonth: 0,
+  newProductsThisWeek: 0,
+  newUsersThisWeek: 0
 })
 
 const recentActivities = ref([
@@ -481,16 +328,16 @@ const recentActivities = ref([
   },
   {
     id: 3,
-    type: 'post_created',
-    description: '새로운 공지사항이 게시되었습니다',
-    details: '시스템 정기점검 안내',
+    type: 'user_registered',
+    description: '신규 사용자가 가입했습니다',
+    details: '이번 주 +24명',
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
   },
   {
     id: 4,
-    type: 'user_registered',
-    description: '신규 사용자가 가입했습니다',
-    details: '이번 주 +124명',
+    type: 'review_added',
+    description: '새로운 리뷰가 작성되었습니다',
+    details: '상품: 프리미엄 크루아상 세트 (★★★★★)',
     createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000)
   }
 ])
@@ -505,13 +352,13 @@ const shopTrendData = ref([
   { month: '6월', shops: 30 }
 ])
 
-const postStatsData = ref([
-  { name: '공지사항', value: 30 },
-  { name: '일반 게시물', value: 50 },
-  { name: 'FAQ', value: 20 }
+const productStatsData = ref([
+  { name: '판매중', value: 65 },
+  { name: '품절', value: 20 },
+  { name: '판매중지', value: 15 }
 ])
 
-const postColors = ['#ef4444', '#3b82f6', '#22c55e']
+const productColors = ['#10b981', '#f59e0b', '#ef4444']
 
 onMounted(async () => {
   updateTime()
@@ -524,38 +371,85 @@ const updateTime = () => {
 }
 
 const loadDashboardData = async () => {
+  loading.value = true
   try {
-    const config = useRuntimeConfig()
-    const authStore = useAuthStore()
+    // 실제 API 엔드포인트가 있다면 사용, 없다면 기본값 사용
+    await shopStore.fetchShops({ size: 1000 }) // 모든 상점 조회
 
-    const dashboardData = await $fetch(`${config.public.apiBase}/admin/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
-    })
+    // 통계 계산
+    const shops = shopStore.shops
+    const totalShops = shops.length
+    const activeShops = shops.filter(shop => shop.isActive).length
+    const totalProducts = shops.reduce((sum, shop) => sum + (shop.productCount || 0), 0)
 
-    stats.value = dashboardData.stats
-    recentActivities.value = dashboardData.recentActivities
+    // 이번 달 생성된 상점 계산
+    const thisMonth = new Date().getMonth()
+    const newShopsThisMonth = shops.filter(shop => {
+      const createdMonth = new Date(shop.createdAt).getMonth()
+      return createdMonth === thisMonth
+    }).length
 
-    // 실제 데이터가 있다면 차트 데이터 업데이트
-    if (dashboardData.shopTrend) {
-      shopTrendData.value = dashboardData.shopTrend
+    stats.value = {
+      totalShops,
+      totalProducts,
+      activeUsers: 342, // 실제 사용자 서비스에서 가져와야 함
+      newShopsThisMonth,
+      newProductsThisWeek: 18, // 실제 계산 필요
+      newUsersThisWeek: 24 // 실제 사용자 서비스에서 가져와야 함
     }
-    if (dashboardData.postStats) {
-      postStatsData.value = dashboardData.postStats
-    }
+
+    // 상점 생성 추이 업데이트 (실제 데이터로 계산 가능)
+    updateShopTrendData(shops)
+
   } catch (error) {
     console.error('대시보드 데이터 로드 실패:', error)
     // 에러 발생시 기본 더미 데이터 유지
+    stats.value = {
+      totalShops: 127,
+      totalProducts: 2486,
+      activeUsers: 342,
+      newShopsThisMonth: 12,
+      newProductsThisWeek: 18,
+      newUsersThisWeek: 24
+    }
+  } finally {
+    loading.value = false
   }
+}
+
+const updateShopTrendData = (shops) => {
+  // 최근 6개월 데이터 계산
+  const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+  const currentMonth = new Date().getMonth()
+  const trendData = []
+
+  for (let i = 5; i >= 0; i--) {
+    const targetMonth = (currentMonth - i + 12) % 12
+    const monthShops = shops.filter(shop => {
+      const shopMonth = new Date(shop.createdAt).getMonth()
+      return shopMonth === targetMonth
+    }).length
+
+    trendData.push({
+      month: monthNames[targetMonth],
+      shops: monthShops
+    })
+  }
+
+  shopTrendData.value = trendData
+}
+
+const refreshData = async () => {
+  await loadDashboardData()
+  toast.success('데이터가 새로고침되었습니다.')
 }
 
 const getActivityIconClass = (type) => {
   const classes = {
     shop_created: 'bg-gradient-to-br from-green-500 to-emerald-600',
     product_added: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-    post_created: 'bg-gradient-to-br from-purple-500 to-pink-600',
-    user_registered: 'bg-gradient-to-br from-yellow-500 to-orange-600'
+    user_registered: 'bg-gradient-to-br from-yellow-500 to-orange-600',
+    review_added: 'bg-gradient-to-br from-purple-500 to-pink-600'
   }
   return classes[type] || 'bg-gradient-to-br from-gray-500 to-gray-600'
 }

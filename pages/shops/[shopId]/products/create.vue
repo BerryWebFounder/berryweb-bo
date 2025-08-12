@@ -322,8 +322,7 @@ const route = useRoute()
 const router = useRouter()
 const shopId = route.params.shopId
 
-const productStore = useProductStore()
-const categoryStore = useCategoryStore()
+const { $api } = useNuxtApp()
 const toast = useToast()
 
 const categories = ref([])
@@ -357,7 +356,10 @@ onMounted(async () => {
 const loadCategories = async () => {
   try {
     // 카테고리 API가 있다면 로드, 없다면 빈 배열로 유지
-    // categories.value = await categoryStore.fetchCategories(shopId)
+    // const response = await $api.get(`/api/v1/shops/${shopId}/categories`)
+    // if (response.success) {
+    //   categories.value = response.data
+    // }
     categories.value = []
   } catch (error) {
     console.error('카테고리 로드 실패:', error)
@@ -408,9 +410,6 @@ const saveProduct = async () => {
   saving.value = true
 
   try {
-    // 이미지 파일들 준비
-    const imageFiles = selectedImages.value.map(img => img.file)
-
     const productData = {
       shopId: parseInt(shopId),
       name: form.name,
@@ -432,13 +431,43 @@ const saveProduct = async () => {
       dimensions: form.dimensions || null
     }
 
-    await productStore.createProduct(shopId, productData, imageFiles)
+    // 이미지 파일들 준비
+    const imageFiles = selectedImages.value.map(img => img.file)
 
-    toast.success('상품이 성공적으로 등록되었습니다.')
-    await router.push(`/shops/${shopId}`)
+    let response
 
+    if (imageFiles.length > 0) {
+      // FormData로 전송
+      const formData = new FormData()
+
+      // 상품 데이터를 JSON으로 추가
+      formData.append('product', new Blob([JSON.stringify(productData)], {
+        type: 'application/json'
+      }))
+
+      // 이미지 파일들 추가
+      imageFiles.forEach((file) => {
+        formData.append('images', file)
+      })
+
+      response = await $api.post(`/api/v1/shops/${shopId}/products`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+    } else {
+      // JSON으로 전송
+      response = await $api.post(`/api/v1/shops/${shopId}/products`, productData)
+    }
+
+    if (response.success) {
+      toast.success('상품이 성공적으로 등록되었습니다.')
+      await router.push(`/shops/${shopId}`)
+    } else {
+      toast.error(response.message || '상품 등록에 실패했습니다.')
+    }
   } catch (error) {
-    toast.error(error.message || '상품 등록에 실패했습니다.')
+    toast.error(error.data?.message || error.message || '상품 등록에 실패했습니다.')
     console.error('상품 저장 실패:', error)
   } finally {
     saving.value = false
@@ -460,3 +489,17 @@ const generateSlug = (text) => {
       .replace(/^-|-$/g, '')
 }
 </script>
+
+<style scoped>
+.form-input {
+  @apply mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-textarea {
+  @apply mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-select {
+  @apply mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+</style>

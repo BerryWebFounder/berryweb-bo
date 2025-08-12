@@ -24,7 +24,8 @@ export const useAuthStore = defineStore('auth', {
 
                 console.log('Sending login request:', loginData)
 
-                const response = await $fetch(`${config.public.apiBase}/api/v1/auth/login`, {
+                // ✅ User 서비스(8081)로 요청
+                const response = await $fetch(`${config.public.services.user}/v1/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -43,34 +44,6 @@ export const useAuthStore = defineStore('auth', {
             } catch (error) {
                 this.error = error.data?.message || error.message || '로그인에 실패했습니다.'
                 console.error('Login error:', error)
-                throw error
-            } finally {
-                this.loading = false
-            }
-        },
-
-        async loginWithOAuth(provider, code) {
-            this.loading = true
-            this.error = null
-            try {
-                const config = useRuntimeConfig()
-                const response = await $fetch(`${config.public.apiBase}/api/v1/auth/oauth2/${provider}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: { code }
-                })
-
-                if (response.success && response.data) {
-                    this.setAuth(response.data.token, response.data.user)
-                    await navigateTo('/dashboard')
-                    return response
-                } else {
-                    throw new Error(response.message || 'OAuth 로그인에 실패했습니다.')
-                }
-            } catch (error) {
-                this.error = error.data?.message || error.message || 'OAuth 로그인에 실패했습니다.'
                 throw error
             } finally {
                 this.loading = false
@@ -96,9 +69,9 @@ export const useAuthStore = defineStore('auth', {
             try {
                 const config = useRuntimeConfig()
 
-                // 백엔드에 로그아웃 요청 (옵션)
+                // ✅ User 서비스(8081)로 로그아웃 요청
                 if (this.token) {
-                    await $fetch(`${config.public.apiBase}/api/v1/auth/logout`, {
+                    await $fetch(`${config.public.services.user}/v1/auth/logout`, {
                         method: 'POST',
                         headers: {
                             Authorization: `Bearer ${this.token}`
@@ -128,7 +101,8 @@ export const useAuthStore = defineStore('auth', {
 
             try {
                 const config = useRuntimeConfig()
-                const response = await $fetch(`${config.public.apiBase}/api/v1/auth/me`, {
+                // ✅ User 서비스(8081)에서 사용자 정보 조회
+                const response = await $fetch(`${config.public.services.user}/v1/auth/me`, {
                     headers: {
                         Authorization: `Bearer ${this.token}`
                     }
@@ -155,7 +129,8 @@ export const useAuthStore = defineStore('auth', {
 
             try {
                 const config = useRuntimeConfig()
-                const response = await $fetch(`${config.public.apiBase}/api/v1/auth/refresh`, {
+                // ✅ User 서비스(8081)에서 토큰 갱신
+                const response = await $fetch(`${config.public.services.user}/v1/auth/refresh`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${this.token}`
@@ -201,22 +176,22 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        // 권한 체크
+        // 권한 체크 - 백엔드 Role enum에 맞게 수정
         hasRole(role) {
-            return this.user?.role === role || this.user?.roles?.includes(role)
+            return this.user?.role === role
         },
 
         hasAnyRole(roles) {
             if (!this.user) return false
-            if (this.user.role && roles.includes(this.user.role)) return true
-            if (this.user.roles) {
-                return roles.some(role => this.user.roles.includes(role))
-            }
-            return false
+            return roles.includes(this.user.role)
         },
 
         isAdmin() {
             return this.hasAnyRole(['ADMIN', 'SYSOP'])
+        },
+
+        isStaff() {
+            return this.hasAnyRole(['ADMIN', 'SYSOP', 'STAFF'])
         }
     }
 })
