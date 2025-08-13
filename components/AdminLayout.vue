@@ -177,7 +177,8 @@
             <!-- 알림 버튼 -->
             <button class="relative p-2 text-gray-400 hover:text-gray-500 transition-colors">
               <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5c-3 3-6.5-1-3-4l-2-1m-4-4H6l5-5c3-3 6.5 1 3 4l2 1M9 21H3l3-6 3 6zM21 3l-6 6h6V3z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
               <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
             </button>
