@@ -71,13 +71,13 @@ export const useShopStore = defineStore('shop', {
                         }
                     }
                 } else {
-                    throw new Error(response.message || '상점 목록 조회에 실패했습니다.')
+                    throw new Error(response.message || '브랜드 목록 조회에 실패했습니다.')
                 }
 
                 return response
             } catch (error) {
                 this.error = error.data?.message || error.message
-                console.error('상점 목록 조회 실패:', error)
+                console.error('브랜드 목록 조회 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -96,11 +96,11 @@ export const useShopStore = defineStore('shop', {
                     this.currentShop = response.data
                     return response.data
                 } else {
-                    throw new Error(response.message || '상점 정보 조회에 실패했습니다.')
+                    throw new Error(response.message || '브랜드 정보 조회에 실패했습니다.')
                 }
             } catch (error) {
                 this.error = error.data?.message || error.message
-                console.error('상점 정보 조회 실패:', error)
+                console.error('브랜드 정보 조회 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -116,15 +116,15 @@ export const useShopStore = defineStore('shop', {
                 const response = await $api.post('/api/v1/shops', shopData)
 
                 if (response.success) {
-                    // 새로 생성된 상점을 목록 맨 앞에 추가
+                    // 새로 생성된 브랜드를 목록 맨 앞에 추가
                     this.shops.unshift(response.data)
                     return response.data
                 } else {
-                    throw new Error(response.message || '상점 생성에 실패했습니다.')
+                    throw new Error(response.message || '브랜드 생성에 실패했습니다.')
                 }
             } catch (error) {
                 this.error = error.data?.message || error.message
-                console.error('상점 생성 실패:', error)
+                console.error('브랜드 생성 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -140,24 +140,24 @@ export const useShopStore = defineStore('shop', {
                 const response = await $api.put(`/api/v1/shops/${shopId}`, shopData)
 
                 if (response.success) {
-                    // 목록에서 해당 상점 업데이트
+                    // 목록에서 해당 브랜드 업데이트
                     const index = this.shops.findIndex(shop => shop.id === shopId)
                     if (index !== -1) {
                         this.shops[index] = response.data
                     }
 
-                    // 현재 선택된 상점이면 업데이트
+                    // 현재 선택된 브랜드이면 업데이트
                     if (this.currentShop?.id === shopId) {
                         this.currentShop = response.data
                     }
 
                     return response.data
                 } else {
-                    throw new Error(response.message || '상점 정보 수정에 실패했습니다.')
+                    throw new Error(response.message || '브랜드 정보 수정에 실패했습니다.')
                 }
             } catch (error) {
                 this.error = error.data?.message || error.message
-                console.error('상점 정보 수정 실패:', error)
+                console.error('브랜드 정보 수정 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -176,11 +176,11 @@ export const useShopStore = defineStore('shop', {
                     this.shops = response.data
                     return response.data
                 } else {
-                    throw new Error(response.message || '내 상점 목록 조회에 실패했습니다.')
+                    throw new Error(response.message || '내 브랜드 목록 조회에 실패했습니다.')
                 }
             } catch (error) {
                 this.error = error.data?.message || error.message
-                console.error('내 상점 목록 조회 실패:', error)
+                console.error('내 브랜드 목록 조회 실패:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -196,17 +196,17 @@ export const useShopStore = defineStore('shop', {
             })
         },
 
-        // 상점 삭제 (비활성화)
+        // 브랜드 삭제 (비활성화)
         async deleteShop(shopId) {
             this.loading = true
             this.error = null
             try {
                 const shop = this.shops.find(s => s.id === shopId)
                 if (!shop) {
-                    throw new Error('상점을 찾을 수 없습니다.')
+                    throw new Error('브랜드를 찾을 수 없습니다.')
                 }
 
-                // 상점을 비활성화
+                // 브랜드를 비활성화
                 const response = await this.updateShop(shopId, {
                     ...shop,
                     isActive: false
@@ -214,16 +214,16 @@ export const useShopStore = defineStore('shop', {
 
                 return response
             } catch (error) {
-                console.error('상점 삭제 실패:', error)
+                console.error('브랜드 삭제 실패:', error)
                 throw error
             }
         },
 
-        // 상점 상태 토글
+        // 브랜드 상태 토글
         async toggleShopStatus(shopId) {
             const shop = this.shops.find(s => s.id === shopId)
             if (!shop) {
-                throw new Error('상점을 찾을 수 없습니다.')
+                throw new Error('브랜드를 찾을 수 없습니다.')
             }
 
             return await this.updateShop(shopId, {
@@ -247,7 +247,7 @@ export const useShopStore = defineStore('shop', {
             const activeShops = this.shops.filter(shop => shop.isActive).length
             const totalProducts = this.shops.reduce((sum, shop) => sum + (shop.productCount || 0), 0)
 
-            // 이번 달 생성된 상점 계산
+            // 이번 달 생성된 브랜드 계산
             const thisMonth = new Date().getMonth()
             const thisYear = new Date().getFullYear()
             const newShopsThisMonth = this.shops.filter(shop => {

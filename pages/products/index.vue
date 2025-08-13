@@ -794,9 +794,9 @@ const handleSubmit = async (productData) => {
     if (editingProduct.value) {
       await productsStore.updateProduct(editingProduct.value.id, productData)
     } else {
-      // 새 상품 생성 시 상점 ID 필요
+      // 새 상품 생성 시 브랜드 ID 필요
       if (!productData.shopId) {
-        throw new Error('상점을 선택해주세요.')
+        throw new Error('브랜드를 선택해주세요.')
       }
       await productsStore.createProduct(productData.shopId, productData)
     }

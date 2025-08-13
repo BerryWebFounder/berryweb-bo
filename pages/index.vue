@@ -27,7 +27,7 @@
           관리자 시스템에 오신 것을 환영합니다
         </h2>
         <p class="mt-4 text-xl text-gray-600">
-          상점 관리, 게시판 관리 등 다양한 기능을 제공합니다
+          브랜드 관리, 게시판 관리 등 다양한 기능을 제공합니다
         </p>
 
         <div class="mt-8">
@@ -43,7 +43,7 @@
       <!-- 기능 소개 -->
       <div class="mt-16">
         <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <!-- 상점 관리 -->
+          <!-- 브랜드 관리 -->
           <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-6">
               <div class="flex items-center">
@@ -53,12 +53,12 @@
                   </svg>
                 </div>
                 <div class="ml-4">
-                  <h3 class="text-lg font-medium text-gray-900">상점 관리</h3>
+                  <h3 class="text-lg font-medium text-gray-900">브랜드 관리</h3>
                 </div>
               </div>
               <div class="mt-4">
                 <p class="text-gray-600">
-                  상점 생성, 상품 관리, 카테고리 설정 등 온라인 상점 운영에 필요한 모든 기능을 제공합니다.
+                  브랜드 생성, 상품 관리, 카테고리 설정 등 온라인 상점 운영에 필요한 모든 기능을 제공합니다.
                 </p>
               </div>
             </div>
@@ -133,7 +133,7 @@
             <svg class="h-8 w-8 mx-auto mb-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <span class="text-sm font-medium">상점</span>
+            <span class="text-sm font-medium">브랜드</span>
           </div>
 
           <div class="p-4 text-center border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">

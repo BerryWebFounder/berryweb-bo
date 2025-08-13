@@ -26,9 +26,9 @@
           </NuxtLink>
         </li>
 
-        <!-- 상점 관리 (운영자 이상) -->
+        <!-- 브랜드 관리 (운영자 이상) -->
         <li v-if="authStore.isModerator">
-          <div class="nav-section-title">상점 관리</div>
+          <div class="nav-section-title">브랜드 관리</div>
           <ul class="space-y-1 ml-4">
             <li>
               <NuxtLink
@@ -37,7 +37,7 @@
                   :class="{ 'nav-link-active': $route.path.startsWith('/shops') }"
               >
                 <Icon name="products" size="sm" />
-                <span>상점 목록</span>
+                <span>브랜드 목록</span>
               </NuxtLink>
             </li>
             <li>

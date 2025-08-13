@@ -8,7 +8,7 @@
           <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-blue-100 text-sm font-medium">총 상점 수</p>
+                <p class="text-blue-100 text-sm font-medium">총 브랜드 수</p>
                 <p class="text-3xl font-bold">{{ stats.totalShops }}</p>
                 <p class="text-blue-200 text-xs mt-1">+{{ stats.newShopsThisMonth }}개 이번 달</p>
               </div>
@@ -23,7 +23,7 @@
           <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-emerald-100 text-sm font-medium">활성 상점</p>
+                <p class="text-emerald-100 text-sm font-medium">활성 브랜드</p>
                 <p class="text-3xl font-bold">{{ stats.activeShops }}</p>
                 <p class="text-emerald-200 text-xs mt-1">{{ stats.activeShopsPercent }}% 활성화율</p>
               </div>
@@ -62,7 +62,7 @@
               <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              새 상점 생성
+              새 브랜드 생성
             </button>
 
             <button
@@ -94,7 +94,7 @@
           <div class="flex-1 max-w-lg">
             <SearchInput
                 v-model="searchQuery"
-                placeholder="상점명으로 검색..."
+                placeholder="브랜드명으로 검색..."
                 @update:modelValue="handleSearch"
             />
           </div>
@@ -103,7 +103,7 @@
             <select
                 v-model="filters.status"
                 @change="applyFilters"
-                class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="min-w-0 flex-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             >
               <option value="">전체 상태</option>
               <option value="true">활성</option>
@@ -113,7 +113,7 @@
             <select
                 v-model="filters.sortBy"
                 @change="applyFilters"
-                class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="min-w-0 flex-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             >
               <option value="createdAt,desc">최신순</option>
               <option value="createdAt,asc">오래된순</option>
@@ -124,11 +124,11 @@
         </div>
       </div>
 
-      <!-- 상점 목록 -->
+      <!-- 브랜드 목록 -->
       <div class="space-y-6">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold text-gray-900">
-            등록된 상점 <span class="text-blue-600">({{ shops.length }}개)</span>
+            등록된 브랜드 <span class="text-blue-600">({{ shops.length }}개)</span>
           </h2>
           <div class="flex items-center space-x-2">
             <button
@@ -153,7 +153,7 @@
         </div>
 
         <!-- 로딩 상태 -->
-        <LoadingSpinner v-if="loading" text="상점 목록을 불러오는 중..." />
+        <LoadingSpinner v-if="loading" text="브랜드 목록을 불러오는 중..." />
 
         <!-- 에러 상태 -->
         <ErrorMessage
@@ -172,7 +172,7 @@
               :key="shop.id"
               class="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
           >
-            <!-- 상점 헤더 -->
+            <!-- 브랜드 헤더 -->
             <div class="h-32 bg-gradient-to-br from-blue-400 to-purple-500 relative overflow-hidden">
               <div class="absolute inset-0 bg-black/20"></div>
               <div class="absolute bottom-4 left-4 right-4">
@@ -184,7 +184,7 @@
               </div>
             </div>
 
-            <!-- 상점 정보 -->
+            <!-- 브랜드 정보 -->
             <div class="p-6">
               <p class="text-gray-600 text-sm mb-4 line-clamp-2">
                 {{ shop.description || '설명이 없습니다.' }}
@@ -312,24 +312,24 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">상점이 없습니다</h3>
-          <p class="text-gray-500 mb-6">첫 번째 상점을 생성해보세요!</p>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">브랜드가 없습니다</h3>
+          <p class="text-gray-500 mb-6">첫 번째 브랜드를 생성해보세요!</p>
           <button
               @click="showCreateModal = true"
               class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            상점 생성하기
+            브랜드 생성하기
           </button>
         </div>
       </div>
 
-      <!-- 상점 생성 모달 -->
-      <Modal v-model:show="showCreateModal" title="새 상점 생성" size="lg">
+      <!-- 브랜드 생성 모달 -->
+      <Modal v-model:show="showCreateModal" title="새 브랜드 생성" size="lg">
         <form @submit.prevent="handleCreateShop">
           <div class="space-y-6">
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">상점명 *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">브랜드명 *</label>
                 <input
                     v-model="createForm.name"
                     type="text"
@@ -351,11 +351,11 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">상점 설명</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">브랜드 설명</label>
               <textarea
                   v-model="createForm.description"
                   rows="3"
-                  placeholder="상점에 대한 간단한 설명을 입력하세요"
+                  placeholder="브랜드에 대한 간단한 설명을 입력하세요"
                   class="form-textarea"
               ></textarea>
             </div>
@@ -451,7 +451,7 @@
               :disabled="creating"
               class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            {{ creating ? '생성 중...' : '상점 생성' }}
+            {{ creating ? '생성 중...' : '브랜드 생성' }}
           </button>
         </template>
       </Modal>
@@ -465,7 +465,8 @@ definePageMeta({
   layout: 'admin'
 })
 
-const { $api } = useNuxtApp()
+// 올바른 composables 사용
+const api = useApi() // ✅ 이렇게 사용해야 합니다
 const toast = useToast()
 const { confirm } = useConfirm()
 
@@ -507,18 +508,13 @@ const createForm = reactive({
 })
 
 const shopColumns = [
-  { key: 'name', label: '상점' },
+  { key: 'name', label: '브랜드' },
   { key: 'status', label: '상태' },
   { key: 'info', label: '상품/주문 정보' },
   { key: 'createdAt', label: '생성일', type: 'date' }
 ]
 
-// 생명주기
-onMounted(async () => {
-  await loadShops()
-})
-
-// 메서드
+// 수정된 loadShops 함수
 const loadShops = async (page = 0) => {
   loading.value = true
   error.value = null
@@ -542,11 +538,11 @@ const loadShops = async (page = 0) => {
       params.sort = `${field},${direction}`
     }
 
-    const response = await $api.get('/api/v1/shops', { params })
+    // ✅ useApi() composable 사용
+    const response = await api.get('/api/v1/shops', { params })
 
     if (response.success) {
       if (response.data.content) {
-        // 페이지네이션이 있는 경우
         shops.value = response.data.content
         pagination.value = {
           number: response.data.number,
@@ -557,55 +553,33 @@ const loadShops = async (page = 0) => {
           last: response.data.last
         }
       } else {
-        // 일반 배열인 경우
         shops.value = response.data
         pagination.value = null
       }
 
-      // 통계 계산
       calculateStats()
     } else {
-      error.value = response.message || '상점 목록을 불러오는데 실패했습니다.'
+      error.value = response.message || '브랜드 목록을 불러오는데 실패했습니다.'
     }
   } catch (err) {
-    error.value = err.data?.message || err.message || '상점 목록을 불러오는데 실패했습니다.'
-    console.error('상점 목록 로드 실패:', err)
+    error.value = err.data?.message || err.message || '브랜드 목록을 불러오는데 실패했습니다.'
+    console.error('브랜드 목록 로드 실패:', err)
   } finally {
     loading.value = false
   }
 }
 
-const calculateStats = () => {
-  const totalShops = shops.value.length
-  const activeShops = shops.value.filter(shop => shop.isActive).length
-  const totalProducts = shops.value.reduce((sum, shop) => sum + (shop.productCount || 0), 0)
-
-  // 이번 달 생성된 상점 계산
-  const thisMonth = new Date().getMonth()
-  const newShopsThisMonth = shops.value.filter(shop => {
-    const createdMonth = new Date(shop.createdAt).getMonth()
-    return createdMonth === thisMonth
-  }).length
-
-  stats.value = {
-    totalShops,
-    activeShops,
-    totalProducts,
-    newShopsThisMonth,
-    activeShopsPercent: totalShops > 0 ? Math.round((activeShops / totalShops) * 100) : 0,
-    avgProductsPerShop: totalShops > 0 ? Math.round(totalProducts / totalShops) : 0
-  }
-}
-
+// 수정된 handleCreateShop 함수
 const handleCreateShop = async () => {
   if (!createForm.name.trim()) {
-    toast.error('상점명을 입력해주세요.')
+    toast.error('브랜드명을 입력해주세요.')
     return
   }
 
   creating.value = true
   try {
-    const response = await $api.post('/api/v1/shops', createForm)
+    // ✅ useApi() composable 사용
+    const response = await api.post('/api/v1/shops', createForm)
 
     if (response.success) {
       showCreateModal.value = false
@@ -624,23 +598,24 @@ const handleCreateShop = async () => {
         businessHours: ''
       })
 
-      toast.success('상점이 성공적으로 생성되었습니다.')
+      toast.success('브랜드가 성공적으로 생성되었습니다.')
       await loadShops()
     } else {
-      toast.error(response.message || '상점 생성에 실패했습니다.')
+      toast.error(response.message || '브랜드 생성에 실패했습니다.')
     }
   } catch (err) {
-    toast.error(err.data?.message || err.message || '상점 생성에 실패했습니다.')
-    console.error('상점 생성 실패:', err)
+    toast.error(err.data?.message || err.message || '브랜드 생성에 실패했습니다.')
+    console.error('브랜드 생성 실패:', err)
   } finally {
     creating.value = false
   }
 }
 
+// 수정된 toggleShopStatus 함수
 const toggleShopStatus = async (shop) => {
   const confirmed = await confirm({
-    title: shop.isActive ? '상점 비활성화' : '상점 활성화',
-    message: `"${shop.name}" 상점을 ${shop.isActive ? '비활성화' : '활성화'}하시겠습니까?`,
+    title: shop.isActive ? '브랜드 비활성화' : '브랜드 활성화',
+    message: `"${shop.name}" 브랜드를 ${shop.isActive ? '비활성화' : '활성화'}하시겠습니까?`,
     confirmText: shop.isActive ? '비활성화' : '활성화',
     cancelText: '취소'
   })
@@ -652,7 +627,8 @@ const toggleShopStatus = async (shop) => {
         isActive: !shop.isActive
       }
 
-      const response = await $api.put(`/api/v1/shops/${shop.id}`, updateData)
+      // ✅ useApi() composable 사용
+      const response = await api.put(`/api/v1/shops/${shop.id}`, updateData)
 
       if (response.success) {
         // 로컬 상태 업데이트
@@ -662,14 +638,36 @@ const toggleShopStatus = async (shop) => {
         }
 
         calculateStats()
-        toast.success(`상점이 ${response.data.isActive ? '활성화' : '비활성화'}되었습니다.`)
+        toast.success(`브랜드가 ${response.data.isActive ? '활성화' : '비활성화'}되었습니다.`)
       } else {
-        toast.error(response.message || '상점 상태 변경에 실패했습니다.')
+        toast.error(response.message || '브랜드 상태 변경에 실패했습니다.')
       }
     } catch (err) {
-      toast.error(err.data?.message || err.message || '상점 상태 변경에 실패했습니다.')
-      console.error('상점 상태 변경 실패:', err)
+      toast.error(err.data?.message || err.message || '브랜드 상태 변경에 실패했습니다.')
+      console.error('브랜드 상태 변경 실패:', err)
     }
+  }
+}
+
+const calculateStats = () => {
+  const totalShops = shops.value.length
+  const activeShops = shops.value.filter(shop => shop.isActive).length
+  const totalProducts = shops.value.reduce((sum, shop) => sum + (shop.productCount || 0), 0)
+
+  // 이번 달 생성된 브랜드 계산
+  const thisMonth = new Date().getMonth()
+  const newShopsThisMonth = shops.value.filter(shop => {
+    const createdMonth = new Date(shop.createdAt).getMonth()
+    return createdMonth === thisMonth
+  }).length
+
+  stats.value = {
+    totalShops,
+    activeShops,
+    totalProducts,
+    newShopsThisMonth,
+    activeShopsPercent: totalShops > 0 ? Math.round((activeShops / totalShops) * 100) : 0,
+    avgProductsPerShop: totalShops > 0 ? Math.round(totalProducts / totalShops) : 0
   }
 }
 
@@ -689,7 +687,7 @@ const refreshData = async () => {
 const exportData = () => {
   // CSV 내보내기 구현
   const csvData = shops.value.map(shop => ({
-    상점명: shop.name,
+    브랜드명: shop.name,
     소유자: shop.ownerUsername,
     상태: shop.isActive ? '활성' : '비활성',
     상품수: shop.productCount || 0,
@@ -701,7 +699,12 @@ const exportData = () => {
   toast.success('데이터가 내보내졌습니다.')
 }
 
-// 유틸리티 함수
+// 생명주기
+onMounted(async () => {
+  await loadShops()
+})
+
+// 유틸리티 함수들 (기존과 동일)
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('ko-KR')
 }

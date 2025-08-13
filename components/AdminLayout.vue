@@ -38,7 +38,7 @@
             <svg class="w-5 h-5 mr-3" :class="$route.path.startsWith('/shops') ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            상점 관리
+            브랜드 관리
           </NuxtLink>
 
           <NuxtLink
@@ -160,13 +160,13 @@ const currentTime = ref('')
 const pageTitle = computed(() => {
   const titles = {
     '/dashboard': '대시보드',
-    '/shops': '상점 관리',
+    '/shops': '브랜드 관리',
     '/boards': '게시판 관리'
   }
 
   // 동적 라우트 처리
   if (route.path.startsWith('/shops/') && route.path !== '/shops') {
-    return '상점 상세 관리'
+    return '브랜드 상세 관리'
   }
   if (route.path.startsWith('/boards/') && route.path !== '/boards') {
     return '게시판 상세 관리'
@@ -178,12 +178,12 @@ const pageTitle = computed(() => {
 const pageDescription = computed(() => {
   const descriptions = {
     '/dashboard': '시스템 현황과 주요 지표를 확인하세요',
-    '/shops': '등록된 상점들을 관리하고 모니터링하세요',
+    '/shops': '등록된 브랜드들을 관리하고 모니터링하세요',
     '/boards': '게시판과 공지사항을 관리하세요'
   }
 
   if (route.path.startsWith('/shops/') && route.path !== '/shops') {
-    return '상점의 상세 정보와 상품을 관리하세요'
+    return '브랜드의 상세 정보와 상품을 관리하세요'
   }
   if (route.path.startsWith('/boards/') && route.path !== '/boards') {
     return '게시판의 게시물과 댓글을 관리하세요'

@@ -1,119 +1,117 @@
 export const useApi = () => {
     const config = useRuntimeConfig()
-    const authStore = useAuthStore()
-    const toast = useToast()
+    const API_BASE_URL = config.public.apiBaseUrl || 'http://localhost:8083'
 
-    const getServiceUrl = (path) => {
-        const services = config.public.services
-
-        // API 경로에 따라 적절한 서비스 URL 반환
-        if (path.startsWith('/v1/auth') || path.startsWith('/auth') ||
-            path.startsWith('/v1/users') || path.startsWith('/users')) {
-            return services.user
+    // 토큰 가져오기
+    const getAuthToken = () => {
+        if (process.client) {
+            return localStorage.getItem('auth.token') ||
+                sessionStorage.getItem('auth.token') ||
+                useCookie('auth.token').value
         }
-
-        if (path.startsWith('/v1/shops') || path.startsWith('/shops')) {
-            return services.shop
-        }
-
-        if (path.startsWith('/v1/products') || path.startsWith('/products')) {
-            return services.product
-        }
-
-        if (path.startsWith('/v1/categories') || path.startsWith('/categories')) {
-            return services.category
-        }
-
-        if (path.startsWith('/v1/files') || path.startsWith('/files') ||
-            path.startsWith('/admin/files')) {
-            return services.file
-        }
-
-        if (path.startsWith('/v1/boards') || path.startsWith('/boards') ||
-            path.startsWith('/admin/boards')) {
-            return services.board
-        }
-
-        // 기본값은 user 서비스
-        return services.user
+        return null
     }
 
-    const request = async (url, options = {}) => {
+    // 기본 헤더 생성
+    const getHeaders = (additionalHeaders = {}) => {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...additionalHeaders
+        }
+
+        const token = getAuthToken()
+        if (token) {
+            headers.Authorization = `Bearer ${token}`
+        }
+
+        return headers
+    }
+
+    // GET 요청
+    const get = async (url, options = {}) => {
         try {
-            const headers = {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-
-            if (authStore.token) {
-                headers.Authorization = `Bearer ${authStore.token}`
-            }
-
-            let apiUrl = url
-            if (!url.startsWith('http')) {
-                const serviceUrl = getServiceUrl(url)
-                apiUrl = `${serviceUrl}${url}`
-
-                // 디버깅용 로그
-                console.log(`API Request: ${url} -> ${apiUrl}`)
-            }
-
-            const response = await $fetch(apiUrl, {
-                ...options,
-                headers
+            const response = await $fetch(`${API_BASE_URL}${url}`, {
+                method: 'GET',
+                headers: getHeaders(options.headers),
+                query: options.params,
+                ...options
             })
-
-            if (response && typeof response === 'object' && 'success' in response) {
-                if (!response.success) {
-                    throw new Error(response.message || 'API 요청에 실패했습니다.')
-                }
-                return response
-            }
-
             return response
-
         } catch (error) {
-            console.error('API 요청 실패:', error)
-
-            if (error.status === 401) {
-                authStore.logout()
-                return
-            }
-
-            let message = 'API 요청에 실패했습니다.'
-
-            if (error.data?.message) {
-                message = error.data.message
-            } else if (error.data?.errors?.length > 0) {
-                message = error.data.errors[0]
-            } else if (error.message) {
-                message = error.message
-            }
-
-            toast.error(message)
+            await handleApiError(error)
             throw error
         }
     }
 
-    return {
-        get: (url, options = {}) => request(url, { method: 'GET', ...options }),
-        post: (url, body, options = {}) => request(url, { method: 'POST', body, ...options }),
-        put: (url, body, options = {}) => request(url, { method: 'PUT', body, ...options }),
-        patch: (url, body, options = {}) => request(url, { method: 'PATCH', body, ...options }),
-        delete: (url, options = {}) => request(url, { method: 'DELETE', ...options }),
-
-        userService: {
-            get: (path, options = {}) => request(`/v1${path.startsWith('/') ? '' : '/'}${path}`, { method: 'GET', ...options }),
-            post: (path, body, options = {}) => request(`/v1${path.startsWith('/') ? '' : '/'}${path}`, { method: 'POST', body, ...options }),
-            put: (path, body, options = {}) => request(`/v1${path.startsWith('/') ? '' : '/'}${path}`, { method: 'PUT', body, ...options }),
-            delete: (path, options = {}) => request(`/v1${path.startsWith('/') ? '' : '/'}${path}`, { method: 'DELETE', ...options })
-        },
-
-        shopService: {
-            get: (path, options = {}) => request(`/v1/shops${path.startsWith('/') ? '' : '/'}${path}`, { method: 'GET', ...options }),
-            post: (path, body, options = {}) => request(`/v1/shops${path.startsWith('/') ? '' : '/'}${path}`, { method: 'POST', body, ...options }),
-            put: (path, body, options = {}) => request(`/v1/shops${path.startsWith('/') ? '' : '/'}${path}`, { method: 'PUT', body, ...options }),
-            delete: (path, options = {}) => request(`/v1/shops${path.startsWith('/') ? '' : '/'}${path}`, { method: 'DELETE', ...options })
+    // POST 요청
+    const post = async (url, data, options = {}) => {
+        try {
+            const response = await $fetch(`${API_BASE_URL}${url}`, {
+                method: 'POST',
+                headers: getHeaders(options.headers),
+                body: data,
+                ...options
+            })
+            return response
+        } catch (error) {
+            await handleApiError(error)
+            throw error
         }
+    }
+
+    // PUT 요청
+    const put = async (url, data, options = {}) => {
+        try {
+            const response = await $fetch(`${API_BASE_URL}${url}`, {
+                method: 'PUT',
+                headers: getHeaders(options.headers),
+                body: data,
+                ...options
+            })
+            return response
+        } catch (error) {
+            await handleApiError(error)
+            throw error
+        }
+    }
+
+    // DELETE 요청
+    const del = async (url, options = {}) => {
+        try {
+            const response = await $fetch(`${API_BASE_URL}${url}`, {
+                method: 'DELETE',
+                headers: getHeaders(options.headers),
+                ...options
+            })
+            return response
+        } catch (error) {
+            await handleApiError(error)
+            throw error
+        }
+    }
+
+    // 에러 처리
+    const handleApiError = async (error) => {
+        if (error.status === 401) {
+            // 토큰 제거
+            if (process.client) {
+                localStorage.removeItem('auth.token')
+                sessionStorage.removeItem('auth.token')
+                const tokenCookie = useCookie('auth.token')
+                tokenCookie.value = null
+            }
+
+            // 로그인 페이지로 리다이렉트
+            await navigateTo('/login')
+        }
+    }
+
+    return {
+        get,
+        post,
+        put,
+        delete: del,
+        getAuthToken,
+        getHeaders
     }
 }

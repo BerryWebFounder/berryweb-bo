@@ -1,7 +1,7 @@
 <template>
   <AdminLayout>
     <div class="space-y-6">
-      <!-- 상점 정보 헤더 -->
+      <!-- 브랜드 정보 헤더 -->
       <div class="bg-white shadow rounded-lg p-6">
         <div class="flex items-center justify-between">
           <div>
@@ -42,7 +42,7 @@
                 @click="showEditModal = true"
                 class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
             >
-              상점 정보 편집
+              브랜드 정보 편집
             </button>
           </div>
         </div>
@@ -273,7 +273,7 @@
 
           <!-- 설정 탭 -->
           <div v-if="activeTab === 'settings'" class="space-y-6">
-            <h3 class="text-lg font-medium text-gray-900">상점 설정</h3>
+            <h3 class="text-lg font-medium text-gray-900">브랜드 설정</h3>
 
             <div class="bg-gray-50 rounded-lg p-6">
               <h4 class="text-md font-medium text-gray-900 mb-4">기본 정보</h4>
@@ -316,13 +316,13 @@
         </div>
       </div>
 
-      <!-- 상점 편집 모달 -->
-      <Modal v-model:show="showEditModal" title="상점 정보 편집" size="lg">
+      <!-- 브랜드 편집 모달 -->
+      <Modal v-model:show="showEditModal" title="브랜드 정보 편집" size="lg">
         <form @submit.prevent="updateShop">
           <div class="space-y-6">
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
-                <label class="block text-sm font-medium text-gray-700">상점명</label>
+                <label class="block text-sm font-medium text-gray-700">브랜드명</label>
                 <input
                     v-model="editForm.name"
                     type="text"
@@ -428,7 +428,7 @@
                   class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label for="isActive" class="ml-2 block text-sm text-gray-700">
-                상점 활성화
+                브랜드 활성화
               </label>
             </div>
           </div>
@@ -529,11 +529,11 @@ const loadShopData = async () => {
         isActive: shop.value.isActive
       })
     } else {
-      toast.error(response.message || '상점 정보를 불러오는데 실패했습니다.')
+      toast.error(response.message || '브랜드 정보를 불러오는데 실패했습니다.')
     }
   } catch (error) {
-    toast.error(error.data?.message || error.message || '상점 정보를 불러오는데 실패했습니다.')
-    console.error('상점 데이터 로드 실패:', error)
+    toast.error(error.data?.message || error.message || '브랜드 정보를 불러오는데 실패했습니다.')
+    console.error('브랜드 데이터 로드 실패:', error)
   }
 }
 
@@ -616,8 +616,8 @@ const loadReviews = async () => {
 
 const toggleShopStatus = async () => {
   const confirmed = await confirm({
-    title: shop.value.isActive ? '상점 비활성화' : '상점 활성화',
-    message: `"${shop.value.name}" 상점을 ${shop.value.isActive ? '비활성화' : '활성화'}하시겠습니까?`,
+    title: shop.value.isActive ? '브랜드 비활성화' : '브랜드 활성화',
+    message: `"${shop.value.name}" 브랜드를 ${shop.value.isActive ? '비활성화' : '활성화'}하시겠습니까?`,
     confirmText: shop.value.isActive ? '비활성화' : '활성화',
     cancelText: '취소'
   })
@@ -634,13 +634,13 @@ const toggleShopStatus = async () => {
 
       if (response.success) {
         shop.value = response.data
-        toast.success(`상점이 ${response.data.isActive ? '활성화' : '비활성화'}되었습니다.`)
+        toast.success(`브랜드가 ${response.data.isActive ? '활성화' : '비활성화'}되었습니다.`)
       } else {
-        toast.error(response.message || '상점 상태 변경에 실패했습니다.')
+        toast.error(response.message || '브랜드 상태 변경에 실패했습니다.')
       }
     } catch (error) {
-      toast.error(error.data?.message || error.message || '상점 상태 변경에 실패했습니다.')
-      console.error('상점 상태 변경 실패:', error)
+      toast.error(error.data?.message || error.message || '브랜드 상태 변경에 실패했습니다.')
+      console.error('브랜드 상태 변경 실패:', error)
     } finally {
       updating.value = false
     }
@@ -649,7 +649,7 @@ const toggleShopStatus = async () => {
 
 const updateShop = async () => {
   if (!editForm.name.trim()) {
-    toast.error('상점명을 입력해주세요.')
+    toast.error('브랜드명을 입력해주세요.')
     return
   }
 
@@ -660,13 +660,13 @@ const updateShop = async () => {
     if (response.success) {
       shop.value = response.data
       showEditModal.value = false
-      toast.success('상점 정보가 성공적으로 수정되었습니다.')
+      toast.success('브랜드 정보가 성공적으로 수정되었습니다.')
     } else {
-      toast.error(response.message || '상점 정보 수정에 실패했습니다.')
+      toast.error(response.message || '브랜드 정보 수정에 실패했습니다.')
     }
   } catch (error) {
-    toast.error(error.data?.message || error.message || '상점 정보 수정에 실패했습니다.')
-    console.error('상점 정보 수정 실패:', error)
+    toast.error(error.data?.message || error.message || '브랜드 정보 수정에 실패했습니다.')
+    console.error('브랜드 정보 수정 실패:', error)
   } finally {
     updating.value = false
   }

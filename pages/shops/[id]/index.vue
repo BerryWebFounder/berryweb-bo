@@ -1,7 +1,7 @@
 <template>
   <AdminLayout>
     <div class="space-y-6">
-      <!-- 상점 정보 헤더 -->
+      <!-- 브랜드 정보 헤더 -->
       <div class="bg-white shadow rounded-lg p-6">
         <div class="flex items-center justify-between">
           <div>
@@ -42,7 +42,7 @@
                 @click="showEditModal = true"
                 class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
             >
-              상점 정보 편집
+              브랜드 정보 편집
             </button>
           </div>
         </div>
@@ -273,7 +273,7 @@
 
           <!-- 설정 탭 -->
           <div v-if="activeTab === 'settings'" class="space-y-6">
-            <h3 class="text-lg font-medium text-gray-900">상점 설정</h3>
+            <h3 class="text-lg font-medium text-gray-900">브랜드 설정</h3>
 
             <div class="bg-gray-50 rounded-lg p-6">
               <h4 class="text-md font-medium text-gray-900 mb-4">기본 정보</h4>
@@ -316,13 +316,13 @@
         </div>
       </div>
 
-      <!-- 상점 편집 모달 -->
-      <Modal v-model:show="showEditModal" title="상점 정보 편집" size="lg">
+      <!-- 브랜드 편집 모달 -->
+      <Modal v-model:show="showEditModal" title="브랜드 정보 편집" size="lg">
         <form @submit.prevent="updateShop">
           <div class="space-y-6">
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
-                <label class="block text-sm font-medium text-gray-700">상점명</label>
+                <label class="block text-sm font-medium text-gray-700">브랜드명</label>
                 <input
                     v-model="editForm.name"
                     type="text"
@@ -512,8 +512,8 @@ const loadShopData = async () => {
       businessHours: shop.value.businessHours
     })
   } catch (error) {
-    toast.error('상점 정보를 불러오는데 실패했습니다.')
-    console.error('상점 데이터 로드 실패:', error)
+    toast.error('브랜드 정보를 불러오는데 실패했습니다.')
+    console.error('브랜드 데이터 로드 실패:', error)
   }
 }
 
@@ -543,7 +543,7 @@ const loadProducts = async (page = 0) => {
 const loadReviews = async () => {
   reviewsLoading.value = true
   try {
-    // 상점의 모든 상품에 대한 리뷰를 가져오기 위해
+    // 브랜드의 모든 상품에 대한 리뷰를 가져오기 위해
     // 각 상품의 리뷰를 조회하고 합침
     const allReviews = []
     for (const product of products.value) {
@@ -574,10 +574,10 @@ const toggleShopStatus = async () => {
     })
 
     shop.value = updatedShop
-    toast.success(`상점이 ${updatedShop.isActive ? '활성화' : '비활성화'}되었습니다.`)
+    toast.success(`브랜드가 ${updatedShop.isActive ? '활성화' : '비활성화'}되었습니다.`)
   } catch (error) {
-    toast.error('상점 상태 변경에 실패했습니다.')
-    console.error('상점 상태 변경 실패:', error)
+    toast.error('브랜드 상태 변경에 실패했습니다.')
+    console.error('브랜드 상태 변경 실패:', error)
   } finally {
     updating.value = false
   }
@@ -589,10 +589,10 @@ const updateShop = async () => {
     const updatedShop = await shopStore.updateShop(shopId, editForm)
     shop.value = updatedShop
     showEditModal.value = false
-    toast.success('상점 정보가 성공적으로 수정되었습니다.')
+    toast.success('브랜드 정보가 성공적으로 수정되었습니다.')
   } catch (error) {
-    toast.error('상점 정보 수정에 실패했습니다.')
-    console.error('상점 정보 수정 실패:', error)
+    toast.error('브랜드 정보 수정에 실패했습니다.')
+    console.error('브랜드 정보 수정 실패:', error)
   } finally {
     updating.value = false
   }

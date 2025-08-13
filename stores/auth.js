@@ -22,8 +22,6 @@ export const useAuthStore = defineStore('auth', {
                     password: credentials.password
                 }
 
-                console.log('Sending login request:', loginData)
-
                 // ✅ User 서비스(8081)로 요청
                 const response = await $fetch(`${config.public.services.user}/v1/auth/login`, {
                     method: 'POST',

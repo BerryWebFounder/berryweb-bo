@@ -27,7 +27,7 @@
               class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
               active-class="bg-blue-50 text-blue-700"
           >
-            상점 관리
+            브랜드 관리
           </NuxtLink>
 
           <NuxtLink
@@ -79,7 +79,7 @@ const route = useRoute()
 const pageTitle = computed(() => {
   const titles = {
     '/dashboard': '대시보드',
-    '/shops': '상점 관리',
+    '/shops': '브랜드 관리',
     '/boards': '게시판 관리'
   }
   return titles[route.path] || '관리자 페이지'

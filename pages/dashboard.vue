@@ -45,7 +45,7 @@
                 </div>
               </div>
               <div class="text-right">
-                <p class="text-sm font-medium text-gray-500 mb-1">총 상점 수</p>
+                <p class="text-sm font-medium text-gray-500 mb-1">총 브랜드 수</p>
                 <p class="text-3xl font-bold text-gray-900">{{ stats.totalShops.toLocaleString() }}</p>
                 <p class="text-xs text-green-600 font-medium">+{{ stats.newShopsThisMonth }}개 이번 달</p>
               </div>
@@ -96,16 +96,16 @@
 
       <!-- 차트 섹션 -->
       <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <!-- 상점 생성 추이 -->
+        <!-- 브랜드 생성 추이 -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
             <h3 class="text-lg font-semibold text-white flex items-center">
               <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              상점 생성 추이
+              브랜드 생성 추이
             </h3>
-            <p class="text-blue-100 text-sm mt-1">월별 신규 상점 등록 현황</p>
+            <p class="text-blue-100 text-sm mt-1">월별 신규 브랜드 등록 현황</p>
           </div>
           <div class="p-6">
             <div class="space-y-4">
@@ -190,8 +190,8 @@
                 </svg>
               </div>
               <div class="ml-4">
-                <p class="font-medium text-gray-900">상점 관리</p>
-                <p class="text-sm text-gray-500">상점을 생성하고 관리</p>
+                <p class="font-medium text-gray-900">브랜드 관리</p>
+                <p class="text-sm text-gray-500">브랜드를 생성하고 관리</p>
               </div>
             </NuxtLink>
 
@@ -315,7 +315,7 @@ const recentActivities = ref([
   {
     id: 1,
     type: 'shop_created',
-    description: '새로운 상점이 등록되었습니다',
+    description: '새로운 브랜드가 등록되었습니다',
     details: '"맛있는 베이커리" - 김영희님',
     createdAt: new Date(Date.now() - 5 * 60 * 1000)
   },
@@ -374,7 +374,7 @@ const loadDashboardData = async () => {
   loading.value = true
   try {
     // 실제 API 엔드포인트가 있다면 사용, 없다면 기본값 사용
-    await shopStore.fetchShops({ size: 1000 }) // 모든 상점 조회
+    await shopStore.fetchShops({ size: 1000 }) // 모든 브랜드 조회
 
     // 통계 계산
     const shops = shopStore.shops
@@ -382,7 +382,7 @@ const loadDashboardData = async () => {
     const activeShops = shops.filter(shop => shop.isActive).length
     const totalProducts = shops.reduce((sum, shop) => sum + (shop.productCount || 0), 0)
 
-    // 이번 달 생성된 상점 계산
+    // 이번 달 생성된 브랜드 계산
     const thisMonth = new Date().getMonth()
     const newShopsThisMonth = shops.filter(shop => {
       const createdMonth = new Date(shop.createdAt).getMonth()
@@ -398,7 +398,7 @@ const loadDashboardData = async () => {
       newUsersThisWeek: 24 // 실제 사용자 서비스에서 가져와야 함
     }
 
-    // 상점 생성 추이 업데이트 (실제 데이터로 계산 가능)
+    // 브랜드 생성 추이 업데이트 (실제 데이터로 계산 가능)
     updateShopTrendData(shops)
 
   } catch (error) {
