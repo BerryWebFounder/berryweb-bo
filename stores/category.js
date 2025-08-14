@@ -13,14 +13,10 @@ export const useCategoryStore = defineStore('category', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { getOptional } = useApi()
 
-                const response = await $fetch(`${config.public.apiBase}/shops/${shopId}/categories`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                // Authorization 헤더는 선택사항 (public endpoint로 추정)
+                const response = await getOptional(`/v1/shops/${shopId}/categories`)
 
                 if (response.success) {
                     this.categories = response.data
@@ -41,17 +37,10 @@ export const useCategoryStore = defineStore('category', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { post } = useApi()
 
-                const response = await $fetch(`${config.public.apiBase}/shops/${shopId}/categories`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: categoryData
-                })
+                // Authorization 헤더 필수 (카테고리 생성은 인증 필요)
+                const response = await post(`/v1/shops/${shopId}/categories`, categoryData)
 
                 if (response.success) {
                     this.categories.push(response.data)
@@ -72,17 +61,10 @@ export const useCategoryStore = defineStore('category', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { put } = useApi()
 
-                const response = await $fetch(`${config.public.apiBase}/shops/${shopId}/categories/${categoryId}`, {
-                    method: 'PUT',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: categoryData
-                })
+                // Authorization 헤더 필수
+                const response = await put(`/v1/shops/${shopId}/categories/${categoryId}`, categoryData)
 
                 if (response.success) {
                     const index = this.categories.findIndex(c => c.id === categoryId)
@@ -106,15 +88,10 @@ export const useCategoryStore = defineStore('category', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { del } = useApi()
 
-                const response = await $fetch(`${config.public.apiBase}/shops/${shopId}/categories/${categoryId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                // Authorization 헤더 필수
+                const response = await del(`/v1/shops/${shopId}/categories/${categoryId}`)
 
                 if (response.success) {
                     this.categories = this.categories.filter(c => c.id !== categoryId)
@@ -128,6 +105,19 @@ export const useCategoryStore = defineStore('category', {
             } finally {
                 this.loading = false
             }
+        },
+
+        // 상태 초기화
+        clearError() {
+            this.error = null
+        },
+
+        clearCurrentCategory() {
+            this.currentCategory = null
+        },
+
+        clearCategories() {
+            this.categories = []
         }
     }
 })

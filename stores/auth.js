@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
 
                 // 백엔드 API에 맞게 로그인 데이터 구조 수정
                 const loginData = {
@@ -22,8 +22,8 @@ export const useAuthStore = defineStore('auth', {
                     password: credentials.password
                 }
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/v1/auth/login`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/v1/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -65,11 +65,11 @@ export const useAuthStore = defineStore('auth', {
 
         async logout() {
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
 
-                // ✅ User 서비스(8081)로 로그아웃 요청
+                // User 서비스(8081)로 로그아웃 요청
                 if (this.token) {
-                    await $fetch(`${config.public.services.user}/v1/auth/logout`, {
+                    await $fetch(`${USER_API_BASE}/v1/auth/logout`, {
                         method: 'POST',
                         headers: {
                             Authorization: `Bearer ${this.token}`
@@ -98,9 +98,10 @@ export const useAuthStore = defineStore('auth', {
             if (!this.token) return
 
             try {
-                const config = useRuntimeConfig()
-                // ✅ User 서비스(8081)에서 사용자 정보 조회
-                const response = await $fetch(`${config.public.services.user}/v1/auth/me`, {
+                const { USER_API_BASE } = useApi()
+
+                // User 서비스(8081)에서 사용자 정보 조회
+                const response = await $fetch(`${USER_API_BASE}/v1/auth/me`, {
                     headers: {
                         Authorization: `Bearer ${this.token}`
                     }
@@ -126,9 +127,10 @@ export const useAuthStore = defineStore('auth', {
             if (!this.token) return false
 
             try {
-                const config = useRuntimeConfig()
-                // ✅ User 서비스(8081)에서 토큰 갱신
-                const response = await $fetch(`${config.public.services.user}/v1/auth/refresh`, {
+                const { USER_API_BASE } = useApi()
+
+                // User 서비스(8081)에서 토큰 갱신
+                const response = await $fetch(`${USER_API_BASE}/v1/auth/refresh`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${this.token}`

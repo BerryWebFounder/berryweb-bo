@@ -12,19 +12,17 @@ export const useFileStore = defineStore('file', {
             this.uploadProgress = 0
 
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { post } = useApi()
 
                 const formData = new FormData()
                 formData.append('file', file)
                 formData.append('folder', folder)
 
-                const response = await $fetch(`${config.public.apiBase}/admin/files/upload`, {
-                    method: 'POST',
+                // Authorization 헤더 필수 (파일 업로드는 인증 필요)
+                const response = await post('/admin/files/upload', formData, {
                     headers: {
-                        Authorization: `Bearer ${authStore.token}`
+                        'Content-Type': 'multipart/form-data'
                     },
-                    body: formData,
                     onUploadProgress: (progress) => {
                         this.uploadProgress = Math.round((progress.loaded * 100) / progress.total)
                     }
@@ -41,15 +39,10 @@ export const useFileStore = defineStore('file', {
 
         async deleteFile(fileId) {
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { del } = useApi()
 
-                await $fetch(`${config.public.apiBase}/admin/files/${fileId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                // Authorization 헤더 필수
+                await del(`/admin/files/${fileId}`)
             } catch (error) {
                 throw error
             }

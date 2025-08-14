@@ -13,14 +13,10 @@ export const useBoardStore = defineStore('board', {
         async fetchBoards() {
             this.loading = true
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { get } = useApi()
 
-                this.boards = await $fetch(`${config.public.apiBase}/admin/boards`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                // Board API는 별도 서비스에 있을 것으로 추정 - 관리자 권한 필요
+                this.boards = await get('/admin/boards')
             } catch (error) {
                 throw error
             } finally {
@@ -30,16 +26,10 @@ export const useBoardStore = defineStore('board', {
 
         async createBoard(boardData) {
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { post } = useApi()
 
-                const newBoard = await $fetch(`${config.public.apiBase}/admin/boards`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    },
-                    body: boardData
-                })
+                // Authorization 헤더 필수 (관리자만 가능)
+                const newBoard = await post('/admin/boards', boardData)
 
                 this.boards.push(newBoard)
                 return newBoard
@@ -50,14 +40,10 @@ export const useBoardStore = defineStore('board', {
 
         async fetchPosts(boardId) {
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { get } = useApi()
 
-                this.posts = await $fetch(`${config.public.apiBase}/admin/boards/${boardId}/posts`, {
-                    headers: {
-                        Authorization: `Bearer ${authStore.token}`
-                    }
-                })
+                // Authorization 헤더 필수
+                this.posts = await get(`/admin/boards/${boardId}/posts`)
             } catch (error) {
                 throw error
             }

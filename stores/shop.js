@@ -21,7 +21,7 @@ export const useShopStore = defineStore('shop', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { getOptional } = useApi()
 
                 const queryParams = {
                     page: params.page || 0,
@@ -39,12 +39,8 @@ export const useShopStore = defineStore('shop', {
                     queryParams.sort = params.sort
                 }
 
-                // 활성 상태 필터가 있으면 추가
-                if (params.isActive !== undefined && params.isActive !== '') {
-                    queryParams.isActive = params.isActive
-                }
-
-                const response = await $api.get('/api/v1/shops', { params: queryParams })
+                // Authorization 헤더는 선택사항 (public endpoint)
+                const response = await getOptional('/v1/shops', { params: queryParams })
 
                 if (response.success) {
                     if (response.data.content) {
@@ -88,9 +84,10 @@ export const useShopStore = defineStore('shop', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { getOptional } = useApi()
 
-                const response = await $api.get(`/api/v1/shops/${shopId}`)
+                // Authorization 헤더는 선택사항 (public endpoint)
+                const response = await getOptional(`/v1/shops/${shopId}`)
 
                 if (response.success) {
                     this.currentShop = response.data
@@ -111,9 +108,10 @@ export const useShopStore = defineStore('shop', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { post } = useApi()
 
-                const response = await $api.post('/api/v1/shops', shopData)
+                // Authorization 헤더 필수
+                const response = await post('/v1/shops', shopData)
 
                 if (response.success) {
                     // 새로 생성된 브랜드를 목록 맨 앞에 추가
@@ -135,9 +133,10 @@ export const useShopStore = defineStore('shop', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { put } = useApi()
 
-                const response = await $api.put(`/api/v1/shops/${shopId}`, shopData)
+                // Authorization 헤더 필수
+                const response = await put(`/v1/shops/${shopId}`, shopData)
 
                 if (response.success) {
                     // 목록에서 해당 브랜드 업데이트
@@ -168,9 +167,10 @@ export const useShopStore = defineStore('shop', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { get } = useApi()
 
-                const response = await $api.get('/api/v1/shops/my')
+                // Authorization 헤더 필수
+                const response = await get('/v1/shops/my')
 
                 if (response.success) {
                     this.shops = response.data

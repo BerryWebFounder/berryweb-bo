@@ -22,13 +22,12 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
-                const authStore = useAuthStore()
+                const { USER_API_BASE, get } = useApi()
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/users/me`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/users/me`, {
                     headers: {
-                        Authorization: `Bearer ${authStore.token}`
+                        Authorization: `Bearer ${useAuthStore().token}`
                     }
                 })
 
@@ -51,7 +50,7 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
                 const authStore = useAuthStore()
 
                 const queryParams = new URLSearchParams({
@@ -61,8 +60,8 @@ export const useUserStore = defineStore('user', {
                     search: params.search || ''
                 })
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/users?${queryParams}`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/users?${queryParams}`, {
                     headers: {
                         Authorization: `Bearer ${authStore.token}`
                     }
@@ -99,11 +98,11 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
                 const authStore = useAuthStore()
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/users`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/users`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${authStore.token}`,
@@ -131,11 +130,11 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
                 const authStore = useAuthStore()
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/users/${userId}`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/users/${userId}`, {
                     method: 'PUT',
                     headers: {
                         Authorization: `Bearer ${authStore.token}`,
@@ -169,11 +168,11 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
                 const authStore = useAuthStore()
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/users/${userId}`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/users/${userId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${authStore.token}`
@@ -201,11 +200,11 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
                 const authStore = useAuthStore()
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/users/me/change-password`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/users/me/change-password`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${authStore.token}`,
@@ -232,11 +231,11 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
                 const authStore = useAuthStore()
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}/users/me/sessions`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}/users/me/sessions`, {
                     headers: {
                         Authorization: `Bearer ${authStore.token}`
                     }
@@ -261,15 +260,15 @@ export const useUserStore = defineStore('user', {
             this.loading = true
             this.error = null
             try {
-                const config = useRuntimeConfig()
+                const { USER_API_BASE } = useApi()
                 const authStore = useAuthStore()
 
                 const endpoint = userId
                     ? `/users/${userId}/role-history`
                     : '/users/me/role-history'
 
-                // ✅ User 서비스(8081)로 요청
-                const response = await $fetch(`${config.public.services.user}${endpoint}`, {
+                // User 서비스(8081)로 요청
+                const response = await $fetch(`${USER_API_BASE}${endpoint}`, {
                     headers: {
                         Authorization: `Bearer ${authStore.token}`
                     }

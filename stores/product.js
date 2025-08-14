@@ -30,7 +30,7 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { getOptional } = useApi()
 
                 const queryParams = {
                     page: params.page || 0,
@@ -53,7 +53,8 @@ export const useProductStore = defineStore('product', {
                     queryParams.sort = params.sort
                 }
 
-                const response = await $api.get(`/api/v1/shops/${shopId}/products`, { params: queryParams })
+                // Authorization 헤더는 선택사항 (public endpoint)
+                const response = await getOptional(`/v1/shops/${shopId}/products`, { params: queryParams })
 
                 if (response.success) {
                     if (response.data.content) {
@@ -97,9 +98,10 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { getOptional } = useApi()
 
-                const response = await $api.get(`/api/v1/products/${productId}`)
+                // Authorization 헤더는 선택사항 (public endpoint)
+                const response = await getOptional(`/v1/products/${productId}`)
 
                 if (response.success) {
                     this.currentProduct = response.data
@@ -120,9 +122,10 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { post } = useApi()
 
-                // 이미지가 있는 경우 FormData 사용
+                // Authorization 헤더 필수
+                let response
                 if (images && images.length > 0) {
                     const formData = new FormData()
 
@@ -136,28 +139,21 @@ export const useProductStore = defineStore('product', {
                         formData.append('images', image)
                     })
 
-                    const response = await $api.post(`/api/v1/shops/${shopId}/products`, formData, {
+                    response = await post(`/v1/shops/${shopId}/products`, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data'
                         }
                     })
-
-                    if (response.success) {
-                        this.products.unshift(response.data)
-                        return response.data
-                    } else {
-                        throw new Error(response.message || '상품 생성에 실패했습니다.')
-                    }
                 } else {
                     // 이미지가 없는 경우 JSON으로 전송
-                    const response = await $api.post(`/api/v1/shops/${shopId}/products`, productData)
+                    response = await post(`/v1/shops/${shopId}/products`, productData)
+                }
 
-                    if (response.success) {
-                        this.products.unshift(response.data)
-                        return response.data
-                    } else {
-                        throw new Error(response.message || '상품 생성에 실패했습니다.')
-                    }
+                if (response.success) {
+                    this.products.unshift(response.data)
+                    return response.data
+                } else {
+                    throw new Error(response.message || '상품 생성에 실패했습니다.')
                 }
             } catch (error) {
                 this.error = error.data?.message || error.message
@@ -172,9 +168,10 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { put } = useApi()
 
-                const response = await $api.put(`/api/v1/shops/${shopId}/products/${productId}`, productData)
+                // Authorization 헤더 필수 (인증된 사용자만 수정 가능)
+                const response = await put(`/v1/shops/${shopId}/products/${productId}`, productData)
 
                 if (response.success) {
                     // 목록에서 해당 상품 업데이트
@@ -235,7 +232,7 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { getOptional } = useApi()
 
                 const queryParams = {
                     keyword,
@@ -244,7 +241,8 @@ export const useProductStore = defineStore('product', {
                     ...params
                 }
 
-                const response = await $api.get('/api/v1/products/search', { params: queryParams })
+                // Authorization 헤더는 선택사항 (public endpoint)
+                const response = await getOptional('/v1/products/search', { params: queryParams })
 
                 if (response.success) {
                     if (response.data.content) {
@@ -278,7 +276,7 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { getOptional } = useApi()
 
                 const queryParams = {
                     page: params.page || 0,
@@ -286,7 +284,8 @@ export const useProductStore = defineStore('product', {
                     ...params
                 }
 
-                const response = await $api.get('/api/v1/products/featured', { params: queryParams })
+                // Authorization 헤더는 선택사항 (public endpoint)
+                const response = await getOptional('/v1/products/featured', { params: queryParams })
 
                 if (response.success) {
                     if (response.data.content) {
@@ -321,7 +320,7 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { get } = useApi()
 
                 const queryParams = {
                     page: params.page || 0,
@@ -329,7 +328,8 @@ export const useProductStore = defineStore('product', {
                     ...params
                 }
 
-                const response = await $api.get(`/api/v1/products/${productId}/reviews`, { params: queryParams })
+                // Authorization 헤더 필수 (리뷰 조회는 인증 필요)
+                const response = await get(`/v1/products/${productId}/reviews`, { params: queryParams })
 
                 if (response.success) {
                     if (response.data.content) {
@@ -363,8 +363,9 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { post } = useApi()
 
+                // Authorization 헤더 필수
                 let response
                 if (images && images.length > 0) {
                     const formData = new FormData()
@@ -375,13 +376,13 @@ export const useProductStore = defineStore('product', {
                         formData.append('images', image)
                     })
 
-                    response = await $api.post(`/api/v1/products/${productId}/reviews`, formData, {
+                    response = await post(`/v1/products/${productId}/reviews`, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data'
                         }
                     })
                 } else {
-                    response = await $api.post(`/api/v1/products/${productId}/reviews`, reviewData)
+                    response = await post(`/v1/products/${productId}/reviews`, reviewData)
                 }
 
                 if (response.success) {
@@ -403,9 +404,10 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { put } = useApi()
 
-                const response = await $api.put(`/api/v1/products/${productId}/reviews/${reviewId}`, reviewData)
+                // Authorization 헤더 필수
+                const response = await put(`/v1/products/${productId}/reviews/${reviewId}`, reviewData)
 
                 if (response.success) {
                     const index = this.reviews.findIndex(r => r.id === reviewId)
@@ -429,9 +431,10 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { del } = useApi()
 
-                const response = await $api.delete(`/api/v1/products/${productId}/reviews/${reviewId}`)
+                // Authorization 헤더 필수
+                const response = await del(`/v1/products/${productId}/reviews/${reviewId}`)
 
                 if (response.success) {
                     this.reviews = this.reviews.filter(r => r.id !== reviewId)
@@ -451,9 +454,10 @@ export const useProductStore = defineStore('product', {
             this.loading = true
             this.error = null
             try {
-                const { $api } = useNuxtApp()
+                const { post } = useApi()
 
-                const response = await $api.post(`/api/v1/products/${productId}/reviews/${reviewId}/helpful`)
+                // Authorization 헤더 필수
+                const response = await post(`/v1/products/${productId}/reviews/${reviewId}/helpful`)
 
                 if (response.success) {
                     // 리뷰 목록 새로고침 또는 해당 리뷰만 업데이트
