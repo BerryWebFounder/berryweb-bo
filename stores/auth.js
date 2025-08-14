@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', {
             this.loading = true
             this.error = null
             try {
-                const { USER_API_BASE } = useApi()
+                const { post } = useApi()
 
                 // 백엔드 API에 맞게 로그인 데이터 구조 수정
                 const loginData = {
@@ -22,14 +22,12 @@ export const useAuthStore = defineStore('auth', {
                     password: credentials.password
                 }
 
-                // User 서비스(8081)로 요청
-                const response = await $fetch(`${USER_API_BASE}/v1/auth/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: loginData
-                })
+                console.log('Login attempt with data:', loginData)
+
+                // 올바른 API 경로: /v1/auth/login (베이스 URL은 useApi에서 처리)
+                const response = await post('/v1/auth/login', loginData)
+
+                console.log('Login response:', response)
 
                 // 백엔드 응답 구조에 맞게 수정 (ApiResponse 형태)
                 if (response.success && response.data) {
@@ -40,8 +38,8 @@ export const useAuthStore = defineStore('auth', {
                     throw new Error(response.message || '로그인에 실패했습니다.')
                 }
             } catch (error) {
+                console.error('Login error details:', error)
                 this.error = error.data?.message || error.message || '로그인에 실패했습니다.'
-                console.error('Login error:', error)
                 throw error
             } finally {
                 this.loading = false
@@ -65,16 +63,11 @@ export const useAuthStore = defineStore('auth', {
 
         async logout() {
             try {
-                const { USER_API_BASE } = useApi()
+                const { post } = useApi()
 
-                // User 서비스(8081)로 로그아웃 요청
+                // 올바른 API 경로: /v1/auth/logout
                 if (this.token) {
-                    await $fetch(`${USER_API_BASE}/v1/auth/logout`, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${this.token}`
-                        }
-                    }).catch(error => {
+                    await post('/v1/auth/logout', {}).catch(error => {
                         console.warn('로그아웃 요청 실패:', error)
                     })
                 }
@@ -98,14 +91,10 @@ export const useAuthStore = defineStore('auth', {
             if (!this.token) return
 
             try {
-                const { USER_API_BASE } = useApi()
+                const { get } = useApi()
 
-                // User 서비스(8081)에서 사용자 정보 조회
-                const response = await $fetch(`${USER_API_BASE}/v1/auth/me`, {
-                    headers: {
-                        Authorization: `Bearer ${this.token}`
-                    }
-                })
+                // 올바른 API 경로: /v1/auth/me
+                const response = await get('/v1/auth/me')
 
                 // 백엔드 응답 구조에 맞게 수정
                 if (response.success && response.data) {
@@ -127,15 +116,10 @@ export const useAuthStore = defineStore('auth', {
             if (!this.token) return false
 
             try {
-                const { USER_API_BASE } = useApi()
+                const { post } = useApi()
 
-                // User 서비스(8081)에서 토큰 갱신
-                const response = await $fetch(`${USER_API_BASE}/v1/auth/refresh`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${this.token}`
-                    }
-                })
+                // 올바른 API 경로: /v1/auth/refresh
+                const response = await post('/v1/auth/refresh', {})
 
                 if (response.success && response.data) {
                     this.setAuth(response.data.token, response.data.user || this.user)
@@ -176,7 +160,7 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        // 권한 체크 - 백엔드 Role enum에 맞게 수정
+        // 권한 체크
         hasRole(role) {
             return this.user?.role === role
         },

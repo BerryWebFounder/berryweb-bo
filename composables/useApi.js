@@ -1,9 +1,9 @@
 export const useApi = () => {
     const config = useRuntimeConfig()
 
-    // 서비스별 API URL 설정
-    const USER_API_BASE = config.public.services?.user || 'http://localhost:8081'
-    const SHOP_API_BASE = config.public.services?.shop || 'http://localhost:8083'
+    // 서비스별 API URL 설정 (이미 /api가 포함됨)
+    const USER_API_BASE = config.public.services?.user || 'http://localhost:8081/api'
+    const SHOP_API_BASE = config.public.services?.shop || 'http://localhost:8083/api'
 
     // 토큰 가져오기
     const getAuthToken = () => {
@@ -15,7 +15,7 @@ export const useApi = () => {
         return null
     }
 
-    // 기본 헤더 생성
+    // 기본 헤더 생성 (인증 필수)
     const getHeaders = (additionalHeaders = {}) => {
         const headers = {
             'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export const useApi = () => {
         return headers
     }
 
-    // 조건부 Authorization 헤더 추가
+    // 조건부 Authorization 헤더 추가 (인증 선택적)
     const getOptionalAuthHeaders = (additionalHeaders = {}) => {
         const headers = {
             'Content-Type': 'application/json',
@@ -45,11 +45,44 @@ export const useApi = () => {
         return headers
     }
 
+    // API Base URL 결정 (간단화)
+    const getApiBase = (url) => {
+        // User Service 관련 API
+        if (url.includes('/v1/auth/') || url.includes('/v1/users/')) {
+            return USER_API_BASE
+        }
+        // Shop Service 관련 API (모든 나머지)
+        return SHOP_API_BASE
+    }
+
+    // 에러 처리
+    const handleApiError = async (error) => {
+        console.error('API Error:', error)
+
+        if (error.status === 401) {
+            // 토큰 제거
+            if (process.client) {
+                localStorage.removeItem('auth-token')
+                sessionStorage.removeItem('auth-token')
+                const tokenCookie = useCookie('auth-token')
+                tokenCookie.value = null
+            }
+
+            // 로그인 페이지로 리다이렉트
+            await navigateTo('/login')
+        }
+    }
+
     // GET 요청 (필수 인증)
     const get = async (url, options = {}) => {
         try {
             const apiBase = getApiBase(url)
-            const response = await $fetch(`${apiBase}${url}`, {
+            const fullUrl = `${apiBase}${url}`
+
+            console.log('GET Request URL:', fullUrl)
+            console.log('GET Request Headers:', getHeaders(options.headers))
+
+            const response = await $fetch(fullUrl, {
                 method: 'GET',
                 headers: getHeaders(options.headers),
                 query: options.params,
@@ -57,6 +90,7 @@ export const useApi = () => {
             })
             return response
         } catch (error) {
+            console.error('GET Request failed:', error)
             await handleApiError(error)
             throw error
         }
@@ -66,7 +100,11 @@ export const useApi = () => {
     const getOptional = async (url, options = {}) => {
         try {
             const apiBase = getApiBase(url)
-            const response = await $fetch(`${apiBase}${url}`, {
+            const fullUrl = `${apiBase}${url}`
+
+            console.log('GET Optional Request URL:', fullUrl)
+
+            const response = await $fetch(fullUrl, {
                 method: 'GET',
                 headers: getOptionalAuthHeaders(options.headers),
                 query: options.params,
@@ -74,6 +112,7 @@ export const useApi = () => {
             })
             return response
         } catch (error) {
+            console.error('GET Optional Request failed:', error)
             await handleApiError(error)
             throw error
         }
@@ -83,7 +122,12 @@ export const useApi = () => {
     const post = async (url, data, options = {}) => {
         try {
             const apiBase = getApiBase(url)
-            const response = await $fetch(`${apiBase}${url}`, {
+            const fullUrl = `${apiBase}${url}`
+
+            console.log('POST Request URL:', fullUrl)
+            console.log('POST Request Data:', data)
+
+            const response = await $fetch(fullUrl, {
                 method: 'POST',
                 headers: getHeaders(options.headers),
                 body: data,
@@ -91,6 +135,7 @@ export const useApi = () => {
             })
             return response
         } catch (error) {
+            console.error('POST Request failed:', error)
             await handleApiError(error)
             throw error
         }
@@ -100,7 +145,9 @@ export const useApi = () => {
     const put = async (url, data, options = {}) => {
         try {
             const apiBase = getApiBase(url)
-            const response = await $fetch(`${apiBase}${url}`, {
+            const fullUrl = `${apiBase}${url}`
+
+            const response = await $fetch(fullUrl, {
                 method: 'PUT',
                 headers: getHeaders(options.headers),
                 body: data,
@@ -117,7 +164,9 @@ export const useApi = () => {
     const del = async (url, options = {}) => {
         try {
             const apiBase = getApiBase(url)
-            const response = await $fetch(`${apiBase}${url}`, {
+            const fullUrl = `${apiBase}${url}`
+
+            const response = await $fetch(fullUrl, {
                 method: 'DELETE',
                 headers: getHeaders(options.headers),
                 ...options
@@ -126,32 +175,6 @@ export const useApi = () => {
         } catch (error) {
             await handleApiError(error)
             throw error
-        }
-    }
-
-    // API Base URL 결정
-    const getApiBase = (url) => {
-        // User Service 관련 API
-        if (url.includes('/auth/') || url.includes('/users/')) {
-            return USER_API_BASE
-        }
-        // Shop Service 관련 API (기본값)
-        return SHOP_API_BASE
-    }
-
-    // 에러 처리
-    const handleApiError = async (error) => {
-        if (error.status === 401) {
-            // 토큰 제거
-            if (process.client) {
-                localStorage.removeItem('auth-token')
-                sessionStorage.removeItem('auth-token')
-                const tokenCookie = useCookie('auth-token')
-                tokenCookie.value = null
-            }
-
-            // 로그인 페이지로 리다이렉트
-            await navigateTo('/login')
         }
     }
 

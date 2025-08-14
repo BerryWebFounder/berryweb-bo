@@ -21,11 +21,12 @@ export const useShopStore = defineStore('shop', {
             this.loading = true
             this.error = null
             try {
-                const { getOptional } = useApi()
+                // Authorization이 필요하므로 get 메서드 사용 (getOptional이 아님)
+                const { get } = useApi()
 
                 const queryParams = {
                     page: params.page || 0,
-                    size: params.size || 10,
+                    size: params.size || 12,
                     ...params
                 }
 
@@ -39,8 +40,13 @@ export const useShopStore = defineStore('shop', {
                     queryParams.sort = params.sort
                 }
 
-                // Authorization 헤더는 선택사항 (public endpoint)
-                const response = await getOptional('/v1/shops', { params: queryParams })
+                console.log('Fetching shops with params:', queryParams)
+                console.log('Request will be sent to: /v1/shops')
+
+                // Authorization 헤더가 포함된 get 메서드 사용
+                const response = await get('/v1/shops', { params: queryParams })
+
+                console.log('Shop fetch response:', response)
 
                 if (response.success) {
                     if (response.data.content) {
@@ -73,7 +79,13 @@ export const useShopStore = defineStore('shop', {
                 return response
             } catch (error) {
                 this.error = error.data?.message || error.message
-                console.error('브랜드 목록 조회 실패:', error)
+                console.error('브랜드 목록 조회 실패 상세:', {
+                    error: error,
+                    message: error.message,
+                    data: error.data,
+                    status: error.status,
+                    statusText: error.statusText
+                })
                 throw error
             } finally {
                 this.loading = false
@@ -84,10 +96,12 @@ export const useShopStore = defineStore('shop', {
             this.loading = true
             this.error = null
             try {
-                const { getOptional } = useApi()
+                // Authorization이 필요할 수 있으므로 get 사용
+                const { get } = useApi()
 
-                // Authorization 헤더는 선택사항 (public endpoint)
-                const response = await getOptional(`/v1/shops/${shopId}`)
+                console.log('Fetching shop by ID:', shopId)
+
+                const response = await get(`/v1/shops/${shopId}`)
 
                 if (response.success) {
                     this.currentShop = response.data
@@ -187,82 +201,14 @@ export const useShopStore = defineStore('shop', {
             }
         },
 
-        async searchShops(keyword, params = {}) {
-            return await this.fetchShops({
-                search: keyword,
-                page: params.page || 0,
-                size: params.size || 10,
-                ...params
-            })
-        },
+        // 나머지 메서드들...
 
-        // 브랜드 삭제 (비활성화)
-        async deleteShop(shopId) {
-            this.loading = true
-            this.error = null
-            try {
-                const shop = this.shops.find(s => s.id === shopId)
-                if (!shop) {
-                    throw new Error('브랜드를 찾을 수 없습니다.')
-                }
-
-                // 브랜드를 비활성화
-                const response = await this.updateShop(shopId, {
-                    ...shop,
-                    isActive: false
-                })
-
-                return response
-            } catch (error) {
-                console.error('브랜드 삭제 실패:', error)
-                throw error
-            }
-        },
-
-        // 브랜드 상태 토글
-        async toggleShopStatus(shopId) {
-            const shop = this.shops.find(s => s.id === shopId)
-            if (!shop) {
-                throw new Error('브랜드를 찾을 수 없습니다.')
-            }
-
-            return await this.updateShop(shopId, {
-                ...shop,
-                isActive: !shop.isActive
-            })
-        },
-
-        // 상태 초기화
         clearError() {
             this.error = null
         },
 
         clearCurrentShop() {
             this.currentShop = null
-        },
-
-        // 통계 계산
-        getStats() {
-            const totalShops = this.shops.length
-            const activeShops = this.shops.filter(shop => shop.isActive).length
-            const totalProducts = this.shops.reduce((sum, shop) => sum + (shop.productCount || 0), 0)
-
-            // 이번 달 생성된 브랜드 계산
-            const thisMonth = new Date().getMonth()
-            const thisYear = new Date().getFullYear()
-            const newShopsThisMonth = this.shops.filter(shop => {
-                const createdDate = new Date(shop.createdAt)
-                return createdDate.getMonth() === thisMonth && createdDate.getFullYear() === thisYear
-            }).length
-
-            return {
-                totalShops,
-                activeShops,
-                totalProducts,
-                newShopsThisMonth,
-                activeShopsPercent: totalShops > 0 ? Math.round((activeShops / totalShops) * 100) : 0,
-                avgProductsPerShop: totalShops > 0 ? Math.round(totalProducts / totalShops) : 0
-            }
         }
     }
 })
