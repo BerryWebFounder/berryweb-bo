@@ -342,6 +342,7 @@ const form = reactive({
   minStockQuantity: 0,
   maxOrderQuantity: null,
   trackStock: true,
+  status: 'ACTIVE',
   isFeatured: false,
   slug: '',
   metaTitle: '',
@@ -398,7 +399,6 @@ const removeImage = (index) => {
   selectedImages.value.splice(index, 1)
 }
 
-// ✅ useApi() 사용하도록 수정
 const saveProduct = async () => {
   if (!form.name.trim()) {
     toast.error('상품명을 입력해주세요.')
@@ -413,54 +413,102 @@ const saveProduct = async () => {
   saving.value = true
 
   try {
-    const productData = {
-      shopId: parseInt(shopId),
-      name: form.name,
-      description: form.description,
-      shortDescription: form.shortDescription,
-      categoryId: form.categoryId ? parseInt(form.categoryId) : null,
-      price: form.price,
-      salePrice: form.salePrice,
-      costPrice: form.costPrice,
-      stockQuantity: form.stockQuantity,
-      minStockQuantity: form.minStockQuantity,
-      maxOrderQuantity: form.maxOrderQuantity,
-      trackStock: form.trackStock,
-      isFeatured: form.isFeatured,
-      slug: form.slug || null,
-      metaTitle: form.metaTitle || null,
-      metaDescription: form.metaDescription || null,
-      weight: form.weight,
-      dimensions: form.dimensions || null
-    }
-
-    // 이미지 파일들 준비
     const imageFiles = selectedImages.value.map(img => img.file)
 
     let response
 
     if (imageFiles.length > 0) {
-      // FormData로 전송
+      console.log('FormData로 상품 생성 (개별 필드)')
+
+      // FormData로 전송 - 개별 필드로 분해
       const formData = new FormData()
 
-      // 상품 데이터를 JSON으로 추가
-      formData.append('product', new Blob([JSON.stringify(productData)], {
-        type: 'application/json'
-      }))
+      // 상품 정보를 개별 필드로 추가
+      formData.append('shopId', shopId)
+      formData.append('name', form.name)
+      formData.append('description', form.description || '')
+      formData.append('shortDescription', form.shortDescription || '')
+
+      if (form.categoryId) {
+        formData.append('categoryId', form.categoryId)
+      }
+
+      formData.append('price', form.price.toString())
+
+      if (form.salePrice) {
+        formData.append('salePrice', form.salePrice.toString())
+      }
+      if (form.costPrice) {
+        formData.append('costPrice', form.costPrice.toString())
+      }
+
+      formData.append('stockQuantity', form.stockQuantity.toString())
+      formData.append('minStockQuantity', form.minStockQuantity.toString())
+
+      if (form.maxOrderQuantity) {
+        formData.append('maxOrderQuantity', form.maxOrderQuantity.toString())
+      }
+
+      formData.append('trackStock', form.trackStock.toString())
+      formData.append('isFeatured', form.isFeatured.toString())
+
+      if (form.slug) {
+        formData.append('slug', form.slug)
+      }
+      if (form.metaTitle) {
+        formData.append('metaTitle', form.metaTitle)
+      }
+      if (form.metaDescription) {
+        formData.append('metaDescription', form.metaDescription)
+      }
+      if (form.weight) {
+        formData.append('weight', form.weight.toString())
+      }
+      if (form.dimensions) {
+        formData.append('dimensions', form.dimensions)
+      }
 
       // 이미지 파일들 추가
-      imageFiles.forEach((file) => {
+      imageFiles.forEach((file, index) => {
         formData.append('images', file)
       })
 
-      // FormData는 Content-Type을 자동으로 설정하므로 헤더에서 제외
-      response = await api.post(`/api/v1/shops/${shopId}/products`, formData, {
-        headers: {
-          // Content-Type 제거 - FormData가 자동으로 boundary 설정
+      // FormData 내용 확인 (디버깅용)
+      console.log('FormData 필드들:')
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File(${value.name})`)
+        } else {
+          console.log(`${key}: ${value}`)
         }
-      })
+      }
+
+      response = await api.post(`/api/v1/shops/${shopId}/products`, formData)
     } else {
+      console.log('JSON으로 상품 생성 (이미지 없음)')
+
       // JSON으로 전송
+      const productData = {
+        shopId: parseInt(shopId),
+        name: form.name,
+        description: form.description,
+        shortDescription: form.shortDescription,
+        categoryId: form.categoryId ? parseInt(form.categoryId) : null,
+        price: form.price,
+        salePrice: form.salePrice,
+        costPrice: form.costPrice,
+        stockQuantity: form.stockQuantity,
+        minStockQuantity: form.minStockQuantity,
+        maxOrderQuantity: form.maxOrderQuantity,
+        trackStock: form.trackStock,
+        isFeatured: form.isFeatured,
+        slug: form.slug || null,
+        metaTitle: form.metaTitle || null,
+        metaDescription: form.metaDescription || null,
+        weight: form.weight,
+        dimensions: form.dimensions || null
+      }
+
       response = await api.post(`/api/v1/shops/${shopId}/products`, productData)
     }
 
@@ -471,11 +519,36 @@ const saveProduct = async () => {
       toast.error(response.message || '상품 등록에 실패했습니다.')
     }
   } catch (error) {
-    toast.error(error.data?.message || error.message || '상품 등록에 실패했습니다.')
     console.error('상품 저장 실패:', error)
+    toast.error(error.message || '상품 등록에 실패했습니다.')
   } finally {
     saving.value = false
   }
+}
+
+// 이미지 업로드 함수 (별도)
+const uploadProductImages = async (productId) => {
+  if (selectedImages.value.length === 0) return
+
+  const formData = new FormData()
+
+  // 이미지 파일들만 추가
+  selectedImages.value.forEach((image, index) => {
+    formData.append('images', image.file)
+    // 첫 번째 이미지를 메인 이미지로 설정
+    if (index === 0) {
+      formData.append('isMain', 'true')
+    }
+  })
+
+  // 이미지 업로드 API 호출 (상품 ID 포함)
+  const response = await api.post(`/api/v1/products/${productId}/images`, formData)
+
+  if (!response.success) {
+    throw new Error(response.message || '이미지 업로드에 실패했습니다.')
+  }
+
+  console.log('이미지 업로드 성공:', response.data)
 }
 
 // 상품명 입력시 슬러그 자동 생성

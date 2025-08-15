@@ -462,7 +462,8 @@ definePageMeta({
 const route = useRoute()
 const shopId = route.params.id
 
-const { $api } = useNuxtApp()
+// ✅ useApi() composable 사용 (shops/index.vue와 동일한 패턴)
+const api = useApi()
 const toast = useToast()
 const {confirm} = useConfirm()
 
@@ -507,9 +508,10 @@ onMounted(async () => {
   await loadProducts()
 })
 
+// ✅ useApi() 사용하도록 수정
 const loadShopData = async () => {
   try {
-    const response = await $api.get(`/api/v1/shops/${shopId}`)
+    const response = await api.get(`/api/v1/shops/${shopId}`)
 
     if (response.success) {
       shop.value = response.data
@@ -537,6 +539,7 @@ const loadShopData = async () => {
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const loadProducts = async (page = 0) => {
   productLoading.value = true
   try {
@@ -553,7 +556,7 @@ const loadProducts = async (page = 0) => {
       params.status = productFilter.status
     }
 
-    const response = await $api.get(`/api/v1/shops/${shopId}/products`, { params })
+    const response = await api.get(`/api/v1/shops/${shopId}/products`, { params })
 
     if (response.success) {
       if (response.data.content) {
@@ -581,6 +584,7 @@ const loadProducts = async (page = 0) => {
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const loadReviews = async () => {
   reviewsLoading.value = true
   try {
@@ -589,7 +593,7 @@ const loadReviews = async () => {
     // 모든 상품의 리뷰를 가져옴
     for (const product of products.value) {
       try {
-        const response = await $api.get(`/api/v1/products/${product.id}/reviews`, {
+        const response = await api.get(`/api/v1/products/${product.id}/reviews`, {
           params: { page: 0, size: 100 }
         })
 
@@ -614,6 +618,7 @@ const loadReviews = async () => {
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const toggleShopStatus = async () => {
   const confirmed = await confirm({
     title: shop.value.isActive ? '브랜드 비활성화' : '브랜드 활성화',
@@ -630,7 +635,7 @@ const toggleShopStatus = async () => {
         isActive: !shop.value.isActive
       }
 
-      const response = await $api.put(`/api/v1/shops/${shopId}`, updateData)
+      const response = await api.put(`/api/v1/shops/${shopId}`, updateData)
 
       if (response.success) {
         shop.value = response.data
@@ -647,6 +652,7 @@ const toggleShopStatus = async () => {
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const updateShop = async () => {
   if (!editForm.name.trim()) {
     toast.error('브랜드명을 입력해주세요.')
@@ -655,7 +661,7 @@ const updateShop = async () => {
 
   updating.value = true
   try {
-    const response = await $api.put(`/api/v1/shops/${shopId}`, editForm)
+    const response = await api.put(`/api/v1/shops/${shopId}`, editForm)
 
     if (response.success) {
       shop.value = response.data
@@ -672,6 +678,7 @@ const updateShop = async () => {
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const deleteProduct = async (product) => {
   const confirmed = await confirm({
     title: '상품 삭제',
@@ -683,7 +690,7 @@ const deleteProduct = async (product) => {
   if (confirmed) {
     try {
       // 상품 삭제 API 호출 (PUT으로 상태 변경)
-      const response = await $api.put(`/api/v1/shops/${shopId}/products/${product.id}`, {
+      const response = await api.put(`/api/v1/shops/${shopId}/products/${product.id}`, {
         ...product,
         status: 'DISCONTINUED'
       })
@@ -701,6 +708,7 @@ const deleteProduct = async (product) => {
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const deleteReview = async (review) => {
   const confirmed = await confirm({
     title: '리뷰 삭제',
@@ -711,7 +719,7 @@ const deleteReview = async (review) => {
 
   if (confirmed) {
     try {
-      const response = await $api.delete(`/api/v1/products/${review.productId}/reviews/${review.id}`)
+      const response = await api.delete(`/api/v1/products/${review.productId}/reviews/${review.id}`)
 
       if (response.success) {
         await loadReviews()

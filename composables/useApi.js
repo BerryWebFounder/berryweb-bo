@@ -16,11 +16,20 @@ export const useApi = () => {
     }
 
     // 기본 헤더 생성 (인증 필수)
-    const getHeaders = (additionalHeaders = {}) => {
-        const headers = {
-            'Content-Type': 'application/json',
-            ...additionalHeaders
+    const getHeaders = (additionalHeaders = {}, isFormData = false) => {
+        const headers = {}
+
+        // FormData가 아닌 경우에만 Content-Type 설정
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json'
         }
+
+        // 추가 헤더 병합 (단, FormData인 경우 Content-Type 제외)
+        Object.keys(additionalHeaders).forEach(key => {
+            if (!(isFormData && key.toLowerCase() === 'content-type')) {
+                headers[key] = additionalHeaders[key]
+            }
+        })
 
         const token = getAuthToken()
         if (token) {
@@ -31,11 +40,20 @@ export const useApi = () => {
     }
 
     // 조건부 Authorization 헤더 추가 (인증 선택적)
-    const getOptionalAuthHeaders = (additionalHeaders = {}) => {
-        const headers = {
-            'Content-Type': 'application/json',
-            ...additionalHeaders
+    const getOptionalAuthHeaders = (additionalHeaders = {}, isFormData = false) => {
+        const headers = {}
+
+        // FormData가 아닌 경우에만 Content-Type 설정
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json'
         }
+
+        // 추가 헤더 병합
+        Object.keys(additionalHeaders).forEach(key => {
+            if (!(isFormData && key.toLowerCase() === 'content-type')) {
+                headers[key] = additionalHeaders[key]
+            }
+        })
 
         const token = getAuthToken()
         if (token) {
@@ -121,12 +139,16 @@ export const useApi = () => {
             const apiBase = getApiBase(url)
             const fullUrl = `${apiBase}${url}`
 
+            // FormData 감지
+            const isFormData = data instanceof FormData
+
             console.log('POST Request URL:', fullUrl)
-            console.log('POST Request Data:', data)
+            console.log('POST Request Data Type:', isFormData ? 'FormData' : 'JSON')
+            console.log('POST Request Data:', isFormData ? 'FormData object' : data)
 
             const response = await $fetch(fullUrl, {
                 method: 'POST',
-                headers: getHeaders(options.headers),
+                headers: getHeaders(options.headers, isFormData),
                 body: data,
                 ...options
             })
@@ -144,9 +166,12 @@ export const useApi = () => {
             const apiBase = getApiBase(url)
             const fullUrl = `${apiBase}${url}`
 
+            // FormData 감지
+            const isFormData = data instanceof FormData
+
             const response = await $fetch(fullUrl, {
                 method: 'PUT',
-                headers: getHeaders(options.headers),
+                headers: getHeaders(options.headers, isFormData),
                 body: data,
                 ...options
             })
