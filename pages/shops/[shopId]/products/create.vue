@@ -322,7 +322,8 @@ const route = useRoute()
 const router = useRouter()
 const shopId = route.params.shopId
 
-const { $api } = useNuxtApp()
+// ✅ useApi() composable 사용
+const api = useApi()
 const toast = useToast()
 
 const categories = ref([])
@@ -353,10 +354,11 @@ onMounted(async () => {
   await loadCategories()
 })
 
+// ✅ useApi() 사용하도록 수정
 const loadCategories = async () => {
   try {
     // 카테고리 API가 있다면 로드, 없다면 빈 배열로 유지
-    // const response = await $api.get(`/api/v1/shops/${shopId}/categories`)
+    // const response = await api.get(`/api/v1/shops/${shopId}/categories`)
     // if (response.success) {
     //   categories.value = response.data
     // }
@@ -396,6 +398,7 @@ const removeImage = (index) => {
   selectedImages.value.splice(index, 1)
 }
 
+// ✅ useApi() 사용하도록 수정
 const saveProduct = async () => {
   if (!form.name.trim()) {
     toast.error('상품명을 입력해주세요.')
@@ -450,14 +453,15 @@ const saveProduct = async () => {
         formData.append('images', file)
       })
 
-      response = await $api.post(`/api/v1/shops/${shopId}/products`, formData, {
+      // FormData는 Content-Type을 자동으로 설정하므로 헤더에서 제외
+      response = await api.post(`/api/v1/shops/${shopId}/products`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          // Content-Type 제거 - FormData가 자동으로 boundary 설정
         }
       })
     } else {
       // JSON으로 전송
-      response = await $api.post(`/api/v1/shops/${shopId}/products`, productData)
+      response = await api.post(`/api/v1/shops/${shopId}/products`, productData)
     }
 
     if (response.success) {

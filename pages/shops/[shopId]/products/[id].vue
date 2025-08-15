@@ -340,8 +340,8 @@ const router = useRouter()
 const shopId = route.params.shopId
 const productId = route.params.id
 
-const productStore = useProductStore()
-const categoryStore = useCategoryStore()
+// ✅ useApi() composable 사용
+const api = useApi()
 const toast = useToast()
 
 const product = ref(null)
@@ -377,46 +377,57 @@ onMounted(async () => {
   await loadCategories()
 })
 
+// ✅ useApi() 사용하도록 수정
 const loadProduct = async () => {
   loading.value = true
   error.value = ''
 
   try {
-    product.value = await productStore.fetchProductById(productId)
+    const response = await api.get(`/api/v1/products/${productId}`)
 
-    // 폼에 데이터 설정
-    Object.assign(form, {
-      name: product.value.name,
-      description: product.value.description,
-      shortDescription: product.value.shortDescription,
-      categoryId: product.value.categoryId,
-      price: product.value.price,
-      salePrice: product.value.salePrice,
-      stockQuantity: product.value.stockQuantity,
-      minStockQuantity: product.value.minStockQuantity,
-      maxOrderQuantity: product.value.maxOrderQuantity,
-      trackStock: product.value.trackStock,
-      status: product.value.status,
-      isFeatured: product.value.isFeatured,
-      slug: product.value.slug,
-      metaTitle: product.value.metaTitle,
-      metaDescription: product.value.metaDescription,
-      weight: product.value.weight,
-      dimensions: product.value.dimensions,
-      images: product.value.images || []
-    })
+    if (response.success) {
+      product.value = response.data
+
+      // 폼에 데이터 설정
+      Object.assign(form, {
+        name: product.value.name,
+        description: product.value.description,
+        shortDescription: product.value.shortDescription,
+        categoryId: product.value.categoryId,
+        price: product.value.price,
+        salePrice: product.value.salePrice,
+        stockQuantity: product.value.stockQuantity,
+        minStockQuantity: product.value.minStockQuantity,
+        maxOrderQuantity: product.value.maxOrderQuantity,
+        trackStock: product.value.trackStock,
+        status: product.value.status,
+        isFeatured: product.value.isFeatured,
+        slug: product.value.slug,
+        metaTitle: product.value.metaTitle,
+        metaDescription: product.value.metaDescription,
+        weight: product.value.weight,
+        dimensions: product.value.dimensions,
+        images: product.value.images || []
+      })
+    } else {
+      error.value = response.message || '상품 정보를 불러오는데 실패했습니다.'
+    }
   } catch (err) {
-    error.value = err.message || '상품 정보를 불러오는데 실패했습니다.'
+    error.value = err.data?.message || err.message || '상품 정보를 불러오는데 실패했습니다.'
     console.error('상품 로드 실패:', err)
   } finally {
     loading.value = false
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const loadCategories = async () => {
   try {
     // 카테고리 API가 있다면 로드
-    // categories.value = await categoryStore.fetchCategories(shopId)
+    // const response = await api.get(`/api/v1/shops/${shopId}/categories`)
+    // if (response.success) {
+    //   categories.value = response.data
+    // }
     categories.value = []
   } catch (error) {
     console.error('카테고리 로드 실패:', error)
@@ -457,6 +468,7 @@ const removeNewImage = (index) => {
   newImages.value.splice(index, 1)
 }
 
+// ✅ useApi() 사용하도록 수정
 const updateProduct = async () => {
   if (!form.name.trim()) {
     toast.error('상품명을 입력해주세요.')
@@ -491,19 +503,22 @@ const updateProduct = async () => {
       dimensions: form.dimensions || null
     }
 
-    await productStore.updateProduct(shopId, productId, productData)
+    const response = await api.put(`/api/v1/shops/${shopId}/products/${productId}`, productData)
 
-    // 새 이미지가 있다면 업로드 (별도 API 호출이 필요할 수 있음)
-    if (newImages.value.length > 0) {
-      // TODO: 이미지 업로드 API 구현
-      console.log('새 이미지 업로드:', newImages.value)
+    if (response.success) {
+      // 새 이미지가 있다면 업로드 (별도 API 호출이 필요할 수 있음)
+      if (newImages.value.length > 0) {
+        // TODO: 이미지 업로드 API 구현
+        console.log('새 이미지 업로드:', newImages.value)
+      }
+
+      toast.success('상품이 성공적으로 수정되었습니다.')
+      await router.push(`/shops/${shopId}`)
+    } else {
+      toast.error(response.message || '상품 수정에 실패했습니다.')
     }
-
-    toast.success('상품이 성공적으로 수정되었습니다.')
-    await router.push(`/shops/${shopId}`)
-
   } catch (error) {
-    toast.error(error.message || '상품 수정에 실패했습니다.')
+    toast.error(error.data?.message || error.message || '상품 수정에 실패했습니다.')
     console.error('상품 수정 실패:', error)
   } finally {
     saving.value = false

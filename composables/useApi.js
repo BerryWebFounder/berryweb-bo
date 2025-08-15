@@ -79,9 +79,6 @@ export const useApi = () => {
             const apiBase = getApiBase(url)
             const fullUrl = `${apiBase}${url}`
 
-            console.log('GET Request URL:', fullUrl)
-            console.log('GET Request Headers:', getHeaders(options.headers))
-
             const response = await $fetch(fullUrl, {
                 method: 'GET',
                 headers: getHeaders(options.headers),

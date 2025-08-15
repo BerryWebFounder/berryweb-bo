@@ -100,7 +100,7 @@
               </select>
             </div>
 
-            <LoadingSpinner v-if="productStore.loading" text="상품 목록을 불러오는 중..." />
+            <LoadingSpinner v-if="productLoading" text="상품 목록을 불러오는 중..." />
 
             <div v-else-if="products.length === 0" class="text-center py-12">
               <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -183,23 +183,23 @@
             </div>
 
             <!-- 페이지네이션 -->
-            <div v-if="productStore.pagination.totalPages > 1" class="flex justify-center mt-6">
+            <div v-if="productPagination && productPagination.totalPages > 1" class="flex justify-center mt-6">
               <nav class="flex items-center space-x-2">
                 <button
-                    @click="loadProducts(productStore.pagination.page - 1)"
-                    :disabled="productStore.pagination.page === 0"
+                    @click="loadProducts(productPagination.number - 1)"
+                    :disabled="productPagination.first || productLoading"
                     class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   이전
                 </button>
 
                 <span class="px-3 py-2 text-sm text-gray-700">
-                  {{ productStore.pagination.page + 1 }} / {{ productStore.pagination.totalPages }}
+                  {{ productPagination.number + 1 }} / {{ productPagination.totalPages }}
                 </span>
 
                 <button
-                    @click="loadProducts(productStore.pagination.page + 1)"
-                    :disabled="productStore.pagination.page >= productStore.pagination.totalPages - 1"
+                    @click="loadProducts(productPagination.number + 1)"
+                    :disabled="productPagination.last || productLoading"
                     class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   다음
@@ -419,6 +419,18 @@
                   class="form-input"
               />
             </div>
+
+            <div class="flex items-center">
+              <input
+                  v-model="editForm.isActive"
+                  type="checkbox"
+                  id="isActive"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label for="isActive" class="ml-2 block text-sm text-gray-700">
+                브랜드 활성화
+              </label>
+            </div>
           </div>
         </form>
 
@@ -450,8 +462,8 @@ definePageMeta({
 const route = useRoute()
 const shopId = route.params.id
 
-const shopStore = useShopStore()
-const productStore = useProductStore()
+// ✅ useApi() composable 사용 (shops/index.vue와 동일한 패턴)
+const api = useApi()
 const toast = useToast()
 const {confirm} = useConfirm()
 
@@ -463,11 +475,13 @@ const activeTab = ref('products')
 const showEditModal = ref(false)
 const updating = ref(false)
 const reviewsLoading = ref(false)
+const productLoading = ref(false)
 
 const productSearchQuery = ref('')
 const productFilter = reactive({
   status: ''
 })
+const productPagination = ref(null)
 
 const editForm = reactive({
   name: '',
@@ -479,7 +493,8 @@ const editForm = reactive({
   minOrderAmount: 0,
   deliveryFee: 0,
   freeDeliveryAmount: 0,
-  businessHours: ''
+  businessHours: '',
+  isActive: true
 })
 
 const tabs = computed(() => [
@@ -491,33 +506,42 @@ const tabs = computed(() => [
 onMounted(async () => {
   await loadShopData()
   await loadProducts()
-  await loadReviews()
 })
 
+// ✅ useApi() 사용하도록 수정
 const loadShopData = async () => {
   try {
-    shop.value = await shopStore.fetchShopById(shopId)
+    const response = await api.get(`/api/v1/shops/${shopId}`)
 
-    // 편집 폼에 현재 데이터 설정
-    Object.assign(editForm, {
-      name: shop.value.name,
-      description: shop.value.description,
-      businessNumber: shop.value.businessNumber,
-      phone: shop.value.phone,
-      email: shop.value.email,
-      address: shop.value.address,
-      minOrderAmount: shop.value.minOrderAmount,
-      deliveryFee: shop.value.deliveryFee,
-      freeDeliveryAmount: shop.value.freeDeliveryAmount,
-      businessHours: shop.value.businessHours
-    })
+    if (response.success) {
+      shop.value = response.data
+
+      // 편집 폼에 현재 데이터 설정
+      Object.assign(editForm, {
+        name: shop.value.name,
+        description: shop.value.description,
+        businessNumber: shop.value.businessNumber,
+        phone: shop.value.phone,
+        email: shop.value.email,
+        address: shop.value.address,
+        minOrderAmount: shop.value.minOrderAmount,
+        deliveryFee: shop.value.deliveryFee,
+        freeDeliveryAmount: shop.value.freeDeliveryAmount,
+        businessHours: shop.value.businessHours,
+        isActive: shop.value.isActive
+      })
+    } else {
+      toast.error(response.message || '브랜드 정보를 불러오는데 실패했습니다.')
+    }
   } catch (error) {
-    toast.error('브랜드 정보를 불러오는데 실패했습니다.')
+    toast.error(error.data?.message || error.message || '브랜드 정보를 불러오는데 실패했습니다.')
     console.error('브랜드 데이터 로드 실패:', error)
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const loadProducts = async (page = 0) => {
+  productLoading.value = true
   try {
     const params = {
       page,
@@ -532,72 +556,129 @@ const loadProducts = async (page = 0) => {
       params.status = productFilter.status
     }
 
-    const result = await productStore.fetchProducts(shopId, params)
-    products.value = productStore.products
+    const response = await api.get(`/api/v1/shops/${shopId}/products`, { params })
+
+    if (response.success) {
+      if (response.data.content) {
+        products.value = response.data.content
+        productPagination.value = {
+          number: response.data.number,
+          size: response.data.size,
+          totalElements: response.data.totalElements,
+          totalPages: response.data.totalPages,
+          first: response.data.first,
+          last: response.data.last
+        }
+      } else {
+        products.value = response.data
+        productPagination.value = null
+      }
+    } else {
+      toast.error(response.message || '상품 목록을 불러오는데 실패했습니다.')
+    }
   } catch (error) {
-    toast.error('상품 목록을 불러오는데 실패했습니다.')
+    toast.error(error.data?.message || error.message || '상품 목록을 불러오는데 실패했습니다.')
     console.error('상품 목록 로드 실패:', error)
+  } finally {
+    productLoading.value = false
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const loadReviews = async () => {
   reviewsLoading.value = true
   try {
-    // 브랜드의 모든 상품에 대한 리뷰를 가져오기 위해
-    // 각 상품의 리뷰를 조회하고 합침
     const allReviews = []
+
+    // 모든 상품의 리뷰를 가져옴
     for (const product of products.value) {
       try {
-        const result = await productStore.fetchReviews(product.id, {page: 0, size: 100})
-        if (result && result.content) {
-          allReviews.push(...result.content)
+        const response = await api.get(`/api/v1/products/${product.id}/reviews`, {
+          params: { page: 0, size: 100 }
+        })
+
+        if (response.success) {
+          if (response.data.content) {
+            allReviews.push(...response.data.content)
+          } else if (Array.isArray(response.data)) {
+            allReviews.push(...response.data)
+          }
         }
       } catch (error) {
         console.error(`상품 ${product.id}의 리뷰 로드 실패:`, error)
       }
     }
+
     reviews.value = allReviews
   } catch (error) {
-    toast.error('리뷰 목록을 불러오는데 실패했습니다.')
+    toast.error(error.data?.message || error.message || '리뷰 목록을 불러오는데 실패했습니다.')
     console.error('리뷰 목록 로드 실패:', error)
   } finally {
     reviewsLoading.value = false
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const toggleShopStatus = async () => {
-  updating.value = true
-  try {
-    const updatedShop = await shopStore.updateShop(shopId, {
-      ...shop.value,
-      isActive: !shop.value.isActive
-    })
+  const confirmed = await confirm({
+    title: shop.value.isActive ? '브랜드 비활성화' : '브랜드 활성화',
+    message: `"${shop.value.name}" 브랜드를 ${shop.value.isActive ? '비활성화' : '활성화'}하시겠습니까?`,
+    confirmText: shop.value.isActive ? '비활성화' : '활성화',
+    cancelText: '취소'
+  })
 
-    shop.value = updatedShop
-    toast.success(`브랜드가 ${updatedShop.isActive ? '활성화' : '비활성화'}되었습니다.`)
-  } catch (error) {
-    toast.error('브랜드 상태 변경에 실패했습니다.')
-    console.error('브랜드 상태 변경 실패:', error)
-  } finally {
-    updating.value = false
+  if (confirmed) {
+    updating.value = true
+    try {
+      const updateData = {
+        ...shop.value,
+        isActive: !shop.value.isActive
+      }
+
+      const response = await api.put(`/api/v1/shops/${shopId}`, updateData)
+
+      if (response.success) {
+        shop.value = response.data
+        toast.success(`브랜드가 ${response.data.isActive ? '활성화' : '비활성화'}되었습니다.`)
+      } else {
+        toast.error(response.message || '브랜드 상태 변경에 실패했습니다.')
+      }
+    } catch (error) {
+      toast.error(error.data?.message || error.message || '브랜드 상태 변경에 실패했습니다.')
+      console.error('브랜드 상태 변경 실패:', error)
+    } finally {
+      updating.value = false
+    }
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const updateShop = async () => {
+  if (!editForm.name.trim()) {
+    toast.error('브랜드명을 입력해주세요.')
+    return
+  }
+
   updating.value = true
   try {
-    const updatedShop = await shopStore.updateShop(shopId, editForm)
-    shop.value = updatedShop
-    showEditModal.value = false
-    toast.success('브랜드 정보가 성공적으로 수정되었습니다.')
+    const response = await api.put(`/api/v1/shops/${shopId}`, editForm)
+
+    if (response.success) {
+      shop.value = response.data
+      showEditModal.value = false
+      toast.success('브랜드 정보가 성공적으로 수정되었습니다.')
+    } else {
+      toast.error(response.message || '브랜드 정보 수정에 실패했습니다.')
+    }
   } catch (error) {
-    toast.error('브랜드 정보 수정에 실패했습니다.')
+    toast.error(error.data?.message || error.message || '브랜드 정보 수정에 실패했습니다.')
     console.error('브랜드 정보 수정 실패:', error)
   } finally {
     updating.value = false
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const deleteProduct = async (product) => {
   const confirmed = await confirm({
     title: '상품 삭제',
@@ -608,16 +689,26 @@ const deleteProduct = async (product) => {
 
   if (confirmed) {
     try {
-      await productStore.deleteProduct(shopId, product.id)
-      await loadProducts()
-      toast.success('상품이 삭제되었습니다.')
+      // 상품 삭제 API 호출 (PUT으로 상태 변경)
+      const response = await api.put(`/api/v1/shops/${shopId}/products/${product.id}`, {
+        ...product,
+        status: 'DISCONTINUED'
+      })
+
+      if (response.success) {
+        await loadProducts()
+        toast.success('상품이 삭제되었습니다.')
+      } else {
+        toast.error(response.message || '상품 삭제에 실패했습니다.')
+      }
     } catch (error) {
-      toast.error('상품 삭제에 실패했습니다.')
+      toast.error(error.data?.message || error.message || '상품 삭제에 실패했습니다.')
       console.error('상품 삭제 실패:', error)
     }
   }
 }
 
+// ✅ useApi() 사용하도록 수정
 const deleteReview = async (review) => {
   const confirmed = await confirm({
     title: '리뷰 삭제',
@@ -628,11 +719,16 @@ const deleteReview = async (review) => {
 
   if (confirmed) {
     try {
-      await productStore.deleteReview(review.productId, review.id)
-      await loadReviews()
-      toast.success('리뷰가 삭제되었습니다.')
+      const response = await api.delete(`/api/v1/products/${review.productId}/reviews/${review.id}`)
+
+      if (response.success) {
+        await loadReviews()
+        toast.success('리뷰가 삭제되었습니다.')
+      } else {
+        toast.error(response.message || '리뷰 삭제에 실패했습니다.')
+      }
     } catch (error) {
-      toast.error('리뷰 삭제에 실패했습니다.')
+      toast.error(error.data?.message || error.message || '리뷰 삭제에 실패했습니다.')
       console.error('리뷰 삭제 실패:', error)
     }
   }
@@ -655,8 +751,8 @@ const getProductStatus = (status) => {
   const statusMap = {
     'ACTIVE': 'active',
     'INACTIVE': 'inactive',
-    'OUT_OF_STOCK': 'warning',
-    'DISCONTINUED': 'danger'
+    'OUT_OF_STOCK': 'pending',
+    'DISCONTINUED': 'draft'
   }
   return statusMap[status] || 'inactive'
 }
@@ -698,5 +794,13 @@ watch(activeTab, async (newTab) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.form-input {
+  @apply mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-textarea {
+  @apply mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
 }
 </style>
